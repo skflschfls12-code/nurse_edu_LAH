@@ -58,5 +58,10 @@
   "file": "remove-ktaso.html",
   "title": "접수 삭제 - KTAS분류",
   "group": "Nedis"
+ },
+ {
+  "file": "consultation-visit.html",
+  "title": "진료 외 방문",
+  "group": "Nedis"
  }
 ]
