@@ -18,5 +18,10 @@
   "file": "label-fluid.html",
   "title": "수액 라벨 뽑는 법",
   "group": "라벨"
+ },
+ {
+  "file": "label-patient.html",
+  "title": "환자 라벨 뽑는 법",
+  "group": "라벨"
  }
 ]
