@@ -53,5 +53,10 @@
   "file": "remove-ktasx.html",
   "title": "접수 삭제 - KTAS미분류",
   "group": "Nedis"
+ },
+ {
+  "file": "remove-ktaso.html",
+  "title": "접수 삭제 - KTAS분류",
+  "group": "Nedis"
  }
 ]
