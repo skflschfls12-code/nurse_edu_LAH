@@ -15,13 +15,18 @@
   "group": "체크리스트"
  },
  {
+  "file": "label-patient.html",
+  "title": "환자 라벨 뽑는 법",
+  "group": "라벨"
+ },
+ {
   "file": "label-fluid.html",
   "title": "수액 라벨 뽑는 법",
   "group": "라벨"
  },
  {
-  "file": "label-patient.html",
-  "title": "환자 라벨 뽑는 법",
+  "file": "label-specimen.html",
+  "title": "검체 라벨 뽑는 법",
   "group": "라벨"
  },
  {
@@ -38,10 +43,5 @@
   "file": "sterile-kit.html",
   "title": "멸균 세트",
   "group": "처치실"
- },
- {
-  "file": "label-specimen.html",
-  "title": "검체 라벨 뽑는 법",
-  "group": "라벨"
  }
 ]
