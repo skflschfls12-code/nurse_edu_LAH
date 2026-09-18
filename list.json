@@ -3,5 +3,10 @@
   "file": "checklist-day.html",
   "title": "체크리스트(D 추가)",
   "group": "체크리스트"
+ },
+ {
+  "file": "checklist-modayd.html",
+  "title": "체크리스트(월요일 D)",
+  "group": "체크리스트"
  }
 ]
