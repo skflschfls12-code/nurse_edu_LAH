@@ -8,5 +8,10 @@
   "file": "checklist-modayd.html",
   "title": "체크리스트(월요일 D)",
   "group": "체크리스트"
+ },
+ {
+  "file": "checklist-shared.html",
+  "title": "체크리스트(공통)",
+  "group": "체크리스트"
  }
 ]
