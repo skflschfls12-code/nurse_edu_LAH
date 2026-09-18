@@ -20,6 +20,13 @@ figcaption{font-size:.82rem;color:#6E6A61;margin-top:7px;text-align:center}
 .warn::before{content:"⚠️ ";}
 .note p,.warn p{margin:0;display:inline}
 mark{background:#FFE072;padding:0 3px;border-radius:3px}
+.hs{margin:14px 0 0}
+.hswrap{position:relative;display:block;line-height:0}
+.hswrap img{width:100%;border-radius:8px;cursor:default}
+.dot{position:absolute;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;border:2px solid #fff;background:#20242B;color:#fff;font:inherit;font-size:.82rem;font-weight:800;line-height:1;display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.4);padding:0}
+.dot.on{background:#D2691E;transform:translate(-50%,-50%) scale(1.15)}
+.hsinfo{background:#F4F2ED;border:1.5px solid #E0DCD2;border-radius:10px;padding:11px 13px;margin-top:10px;font-size:.9rem;line-height:1.6;text-align:left;color:#4A4E56}
+.hsinfo .nm{font-weight:700;color:#20242B;display:block;font-size:.97rem;margin-bottom:2px}
 .lnk{display:flex;justify-content:space-between;align-items:center;background:#fff;border:2px solid #20242B;color:#20242B;text-decoration:none;padding:15px 17px;border-radius:12px;margin:10px 0 0;font-weight:700;font-size:.97rem;box-shadow:3px 3px 0 rgba(32,36,43,.18)}
 .lnk::after{content:"→"}
 
@@ -44,6 +51,10 @@ function renderPage(d){
     else if(b.type==='text'){h+='<div class="txt">'+fmt(b.text)+'</div>'}
     else if(b.type==='note'){h+='<div class="note">'+fmt(b.text)+'</div>'}
     else if(b.type==='warn'){h+='<div class="warn">'+fmt(b.text)+'</div>'}
+    else if(b.type==='hotspot'&&b.src){
+      h+='<figure class="hs"><div class="hswrap"><img src="'+b.src+'" alt="">';
+      (b.points||[]).forEach((p,i)=>{h+='<button class="dot" type="button" data-n="'+esc(p.name)+'" data-d="'+esc(p.desc)+'" style="left:'+p.x+'%;top:'+p.y+'%">'+(i+1)+'</button>'});
+      h+='</div><div class="hsinfo">번호를 눌러보세요.</div></figure>'}
     else if(b.type==='link'&&b.file){h+='<a class="lnk" href="'+encodeURIComponent(b.file)+'.html">'+esc(b.text||b.file)+'</a>'}
     else if(b.type==='video'&&b.yt){h+='<div class="embed"><iframe src="https://www.youtube-nocookie.com/embed/'+esc(b.yt)+'" allowfullscreen loading="lazy"></iframe></div>'+(b.caption?'<p class="txt" style="text-align:center;font-size:.85rem;color:#5E7079">'+esc(b.caption)+'</p>':'')}
     else if(b.type==='video'&&b.file){h+='<figure><video controls playsinline preload="metadata" src="'+encodeURI(b.file)+'"></video>'+(b.caption?'<figcaption>'+esc(b.caption)+'</figcaption>':'')+'</figure>'}
@@ -53,7 +64,11 @@ function renderPage(d){
 }
 const Z=document.getElementById('zoom');
 document.addEventListener('click',e=>{
-  if(e.target.tagName==='IMG'&&e.target.closest('figure')){document.getElementById('zi').innerHTML='<img src="'+e.target.src+'">';Z.style.display='block'}
+  const dot=e.target.closest&&e.target.closest('.dot');
+  if(dot){const f=dot.closest('.hs');f.querySelectorAll('.dot').forEach(x=>x.classList.remove('on'));dot.classList.add('on');
+    const n=dot.getAttribute('data-n')||'',d=dot.getAttribute('data-d')||'';
+    f.querySelector('.hsinfo').innerHTML=(n?'<span class="nm">'+n+'</span>':'')+d.replace(/\n/g,'<br>');return}
+  if(e.target.tagName==='IMG'&&e.target.closest('figure')&&!e.target.closest('.hs')){document.getElementById('zi').innerHTML='<img src="'+e.target.src+'">';Z.style.display='block'}
   if(e.target.classList.contains('x')||e.target.id==='zoom'){Z.style.display='none'}
 });
 document.getElementById('c').innerHTML=renderPage(JSON.parse(document.getElementById('pagedata').textContent));
