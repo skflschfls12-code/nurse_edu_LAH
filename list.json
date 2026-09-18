@@ -48,5 +48,10 @@
   "file": "material.html",
   "title": "처치 준비",
   "group": "처치실"
+ },
+ {
+  "file": "remove-ktasx.html",
+  "title": "접수 삭제 - KTAS미분류",
+  "group": "Nedis"
  }
 ]
