@@ -1,0 +1,283 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>교육자료 만들기</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+body{margin:0;background:#EEF2F0;color:#1E3340;font-family:"Apple SD Gothic Neo","Malgun Gothic",sans-serif;font-size:16px}
+main{max-width:620px;margin:0 auto;padding:18px 14px 120px}
+h1{font-size:1.3rem;margin:4px 0 14px}
+.box{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px}
+label{display:block;font-weight:600;font-size:.9rem;margin:10px 0 4px}
+.hint{font-size:.8rem;color:#5E7079;margin:4px 0 0}
+input[type=text],textarea{font:inherit;width:100%;box-sizing:border-box;padding:9px;border:1px solid #CBD6D1;border-radius:8px}
+textarea{min-height:80px;resize:vertical}
+button{font:inherit;border:0;border-radius:8px;padding:9px 12px;cursor:pointer;background:#2F7466;color:#fff}
+button.light{background:#E3EFEB;color:#1E3340}
+button.small{padding:5px 9px;font-size:.85rem}
+.blk{border-left:6px solid #9AA7AE;background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.blk .top{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.blk .top strong{flex:1;font-size:.9rem}
+.hsedit{position:relative;display:inline-block;line-height:0;max-width:100%}
+.hsedit img{max-width:100%;display:block;border-radius:8px}
+.pdot{position:absolute;transform:translate(-50%,-50%);width:24px;height:24px;border-radius:50%;background:#20242B;border:2px solid #fff;color:#fff;font-size:.72rem;font-weight:800;display:grid;place-items:center;line-height:1}
+.pt{border:1px solid #CBD6D1;border-radius:10px;padding:9px 10px;margin-top:8px}
+.pt .top{display:flex;align-items:center;gap:8px;margin-bottom:6px}.pt .top strong{flex:1;font-size:.9rem}
+.pt textarea{min-height:56px}
+.blk img{max-width:100%;max-height:180px;display:block;margin:6px 0;border-radius:6px}
+.adds{display:flex;flex-wrap:wrap;gap:6px}
+.swatches{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.sw{width:30px;height:30px;border-radius:50%;border:3px solid transparent;padding:0}
+.sw.on{border-color:#1E3340}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #CBD6D1;padding:10px 14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+#prev{position:fixed;inset:0;background:#fff;display:none;z-index:10}
+#prev iframe{width:100%;height:calc(100% - 56px);border:0}
+#prev .pbar{height:56px;display:flex;align-items:center;justify-content:center;border-top:1px solid #ddd}
+#list .it{display:block;width:100%;text-align:left;margin-top:6px;background:#F6F8F7;color:#1E3340}
+#msg{color:#B8741F;font-size:.9rem;margin:6px 0 0}
+</style></head><body><main>
+<h1>교육자료 만들기</h1>
+
+<div class="box">
+<div class="adds"><button class="light" id="openBtn">파일 불러와서 고치기</button><button class="light" id="newBtn">새로 만들기</button></div>
+<details style="margin-top:10px"><summary class="hint">열쇠를 넣어둔 경우에만 쓰는 기능</summary>
+<div class="adds" style="margin-top:8px"><button class="light small" id="listBtn">사이트에서 바로 불러오기</button><button class="light small" id="manageBtn">목록 관리</button><button class="light small" id="rebuildBtn">목록 다시 만들기</button><button class="light small" id="keyBtn">열쇠 설정</button></div></details>
+<div id="list"></div>
+<input type="file" id="openFile" accept=".html" hidden>
+<label for="title">자료 제목</label><input type="text" id="title" placeholder="예: 검체 라벨 부착법 - 소변편">
+<label for="fname">파일 이름 (영어 소문자, 숫자, - 만)</label><input type="text" id="fname" placeholder="예: specimen-urine">
+<p class="hint">QR을 한 번 붙인 자료는 파일 이름을 바꾸지 마세요.</p>
+<label for="group">분류 (목록에서 묶어줄 이름)</label><input type="text" id="group" list="glist" placeholder="예: 라벨"><datalist id="glist"></datalist>
+</div>
+
+<div id="blocks"></div>
+
+<div class="box"><strong>추가하기</strong>
+<div class="adds" style="margin-top:8px">
+<button class="light small" data-add="heading">큰 제목</button>
+<button class="light small" data-add="card">색깔 칸</button>
+<button class="light small" data-add="text">글</button>
+<button class="light small" data-add="image">사진</button>
+<button class="light small" data-add="video">동영상</button>
+<button class="light small" data-add="hotspot">사진에 설명 붙이기</button>
+<button class="light small" data-add="note">회색 설명칸</button>
+<button class="light small" data-add="warn">주의칸</button>
+<button class="light small" data-add="link">다른 자료로 가는 버튼</button>
+</div>
+<p class="hint">글에서 **이렇게** 쓰면 굵게, ==이렇게== 쓰면 형광펜이 돼요.</p>
+</div>
+<p id="msg"></p>
+</main>
+<div class="bar">
+<button class="light" id="previewBtn">미리보기</button>
+<button id="saveBtn">파일 저장</button><button class="light" id="pushBtn">사이트에 저장</button>
+<button id="qrBtn">QR 저장</button>
+</div>
+<div id="prev"><iframe id="pf"></iframe><div class="pbar"><button id="closePrev">닫기</button></div></div>
+<div id="qrtmp" hidden></div>
+
+<script>
+const SITE='https://skflschfls12-code.github.io/nurse_edu_LAH/';
+const TEMPLATE="<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n<meta name=\"robots\" content=\"noindex,nofollow\"><title>__TITLE__\u003c/title>\n<style>\n@import url(\"https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css\");\n*{box-sizing:border-box}\nbody{margin:0;background:#F6F4EF;color:#20242B;font-family:Pretendard,sans-serif;font-size:15.5px;line-height:1.68;letter-spacing:-.015em;word-break:keep-all}\nmain{max-width:600px;margin:0 auto;padding:22px 14px 70px}\nh1{font-size:1.45rem;font-weight:800;letter-spacing:-.035em;margin:0 0 18px;padding:20px 16px;line-height:1.35;text-align:center;background:#fff;border:2px solid #20242B;border-radius:14px;box-shadow:4px 4px 0 #20242B}\nh2{font-size:.9rem;font-weight:800;margin:28px 2px 10px;background:#20242B;color:#fff;display:inline-block;padding:5px 13px;border-radius:20px}\n.card{background:#fff;border:2px solid #20242B;border-radius:14px;padding:15px;margin-bottom:14px;box-shadow:3px 3px 0 rgba(32,36,43,.18)}\n.head{display:flex;gap:10px;align-items:center;margin-bottom:8px;padding-bottom:9px;border-bottom:2px dashed #E0DCD2}\n.head h3{margin:0;font-size:1rem;font-weight:700;line-height:1.45;letter-spacing:-.02em;flex:1}\n.num{background:var(--c);color:#fff;font-weight:800;font-size:.85rem;width:27px;height:27px;border-radius:9px;display:grid;place-items:center;flex:none}\nfigure img{border-radius:8px}\nfigcaption{font-size:.82rem;color:#6E6A61;margin-top:7px;text-align:center}\n.txt{margin-top:11px;font-size:.93rem;line-height:1.65}\n.note{background:#FFF9E3;border:1.5px solid #E8D98A;border-radius:10px;padding:11px 13px;margin-top:12px;font-size:.9rem;line-height:1.62}\n.note::before{content:\"\ud83d\udca1 \";}\n.warn{background:#FFEFEF;border:1.5px solid #EDBCBC;border-radius:10px;padding:11px 13px;margin-top:12px;font-size:.9rem;line-height:1.62}\n.warn::before{content:\"\u26a0\ufe0f \";}\n.note p,.warn p{margin:0;display:inline}\nmark{background:#FFE072;padding:0 3px;border-radius:3px}\n.hs{margin:14px 0 0}\n.hswrap{position:relative;display:block;line-height:0}\n.hswrap img{width:100%;border-radius:8px;cursor:default}\n.dot{position:absolute;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;border:2px solid #fff;background:#20242B;color:#fff;font:inherit;font-size:.82rem;font-weight:800;line-height:1;display:grid;place-items:center;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.4);padding:0}\n.dot.on{background:#D2691E;transform:translate(-50%,-50%) scale(1.15)}\n.hsinfo{background:#F4F2ED;border:1.5px solid #E0DCD2;border-radius:10px;padding:11px 13px;margin-top:10px;font-size:.9rem;line-height:1.6;text-align:left;color:#4A4E56}\n.hsinfo .nm{font-weight:700;color:#20242B;display:block;font-size:.97rem;margin-bottom:2px}\n.lnk{display:flex;justify-content:space-between;align-items:center;background:#fff;border:2px solid #20242B;color:#20242B;text-decoration:none;padding:15px 17px;border-radius:12px;margin:10px 0 0;font-weight:700;font-size:.97rem;box-shadow:3px 3px 0 rgba(32,36,43,.18)}\n.lnk::after{content:\"\u2192\"}\n\nfigure{margin:14px 0 0}figure img{max-width:100%;display:block;margin:0 auto;cursor:zoom-in}\nfigure video{width:100%;background:#000}\n.embed{position:relative;padding-top:56.25%;margin:14px 0 0}.embed iframe{position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:10px}\n#zoom{position:fixed;inset:0;background:rgba(8,14,20,.95);display:none;overflow:auto;z-index:9;padding:56px 10px 20px;text-align:center}\n#zoom img{max-width:none;width:auto;border-radius:0}\n#zoom .x{position:fixed;top:12px;right:14px;background:#fff;border:0;border-radius:10px;padding:9px 16px;font:inherit;font-weight:600}\nb{font-weight:700}\n\u003c/style>\u003c/head><body><main id=\"c\">\u003c/main><div id=\"zoom\"><button class=\"x\" type=\"button\">\ub2eb\uae30\u003c/button><div id=\"zi\">\u003c/div>\u003c/div>\n<script type=\"application/json\" id=\"pagedata\">__DATA__\u003c/script>\n<script>\nfunction esc(s){return String(s||'').replace(/[&<>\"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[m]))}\nfunction fmt(s){return esc(s).replace(/\\*\\*(.+?)\\*\\*/g,'<b>$1\u003c/b>').replace(/==(.+?)==/g,'<mark>$1\u003c/mark>').replace(/\\n/g,'<br>')}\nfunction renderPage(d){\n  let h='<h1>'+esc(d.title)+'\u003c/h1>',open=false;\n  const close=()=>{if(open){h+='\u003c/section>';open=false}};\n  (d.blocks||[]).forEach(b=>{\n    if(b.type==='heading'){close();h+='<h2>'+esc(b.text)+'\u003c/h2>'}\n    else if(b.type==='card'){close();h+='<section class=\"card\" style=\"--c:'+esc(b.color||'#2F7466')+'\"><div class=\"head\">'+(b.num?'<span class=\"num\">'+esc(b.num)+'\u003c/span>':'')+'<h3>'+esc(b.text)+'\u003c/h3>\u003c/div>';open=true}\n    else if(b.type==='text'){h+='<div class=\"txt\">'+fmt(b.text)+'\u003c/div>'}\n    else if(b.type==='note'){h+='<div class=\"note\">'+fmt(b.text)+'\u003c/div>'}\n    else if(b.type==='warn'){h+='<div class=\"warn\">'+fmt(b.text)+'\u003c/div>'}\n    else if(b.type==='hotspot'&&b.src){\n      h+='<figure class=\"hs\"><div class=\"hswrap\"><img src=\"'+b.src+'\" alt=\"\">';\n      (b.points||[]).forEach((p,i)=>{h+='<button class=\"dot\" type=\"button\" data-n=\"'+esc(p.name)+'\" data-d=\"'+esc(p.desc)+'\" style=\"left:'+p.x+'%;top:'+p.y+'%\">'+(i+1)+'\u003c/button>'});\n      h+='\u003c/div><div class=\"hsinfo\">\ubc88\ud638\ub97c \ub20c\ub7ec\ubcf4\uc138\uc694.\u003c/div>\u003c/figure>'}\n    else if(b.type==='link'&&b.file){h+='<a class=\"lnk\" href=\"'+encodeURIComponent(b.file)+'.html\">'+esc(b.text||b.file)+'\u003c/a>'}\n    else if(b.type==='video'&&b.yt){h+='<div class=\"embed\"><iframe src=\"https://www.youtube-nocookie.com/embed/'+esc(b.yt)+'\" allowfullscreen loading=\"lazy\">\u003c/iframe>\u003c/div>'+(b.caption?'<p class=\"txt\" style=\"text-align:center;font-size:.85rem;color:#5E7079\">'+esc(b.caption)+'\u003c/p>':'')}\n    else if(b.type==='video'&&b.file){h+='<figure><video controls playsinline preload=\"metadata\" src=\"'+encodeURI(b.file)+'\">\u003c/video>'+(b.caption?'<figcaption>'+esc(b.caption)+'\u003c/figcaption>':'')+'\u003c/figure>'}\n    else if(b.type==='image'&&b.src){h+='<figure><img src=\"'+b.src+'\" alt=\"\">'+(b.caption?'<figcaption>'+esc(b.caption)+'\u003c/figcaption>':'')+'\u003c/figure>'}\n  });\n  close();return h;\n}\nconst Z=document.getElementById('zoom');\ndocument.addEventListener('click',e=>{\n  const dot=e.target.closest&&e.target.closest('.dot');\n  if(dot){const f=dot.closest('.hs');f.querySelectorAll('.dot').forEach(x=>x.classList.remove('on'));dot.classList.add('on');\n    const n=dot.getAttribute('data-n')||'',d=dot.getAttribute('data-d')||'';\n    f.querySelector('.hsinfo').innerHTML=(n?'<span class=\"nm\">'+n+'\u003c/span>':'')+d.replace(/\\n/g,'<br>');return}\n  if(e.target.tagName==='IMG'&&e.target.closest('figure')&&!e.target.closest('.hs')){document.getElementById('zi').innerHTML='<img src=\"'+e.target.src+'\">';Z.style.display='block'}\n  if(e.target.classList.contains('x')||e.target.id==='zoom'){Z.style.display='none'}\n});\ndocument.getElementById('c').innerHTML=renderPage(JSON.parse(document.getElementById('pagedata').textContent));\n\u003c/script>\u003c/body>\u003c/html>\n";
+const NAMES={heading:'큰 제목',card:'색깔 칸',text:'글',image:'사진',video:'동영상',hotspot:'사진에 설명 붙이기',note:'회색 설명칸',warn:'주의칸',link:'다른 자료로 가는 버튼'};
+function ytid(u){const m=String(u||'').match(/(?:v=|youtu\.be\/|shorts\/|embed\/)([A-Za-z0-9_-]{6,})/);return m?m[1]:''}
+const COLORS=['#3F66C8','#E53935','#F2D56B','#2FB47C','#8E3FA8','#E8B4C4','#6E5BB8','#F08A24','#9AA7AE'];
+let blocks=[];
+const $=id=>document.getElementById(id);
+
+function draw(){
+  const wrap=$('blocks');wrap.innerHTML='';
+  blocks.forEach((b,i)=>{
+    const el=document.createElement('div');el.className='blk';
+    if(b.type==='card')el.style.borderLeftColor=b.color;
+    el.innerHTML='<div class="top"><strong>'+NAMES[b.type]+'</strong><button class="light small" data-a="up">▲</button><button class="light small" data-a="down">▼</button><button class="light small" data-a="del">삭제</button></div>';
+    const add=(html)=>{const d=document.createElement('div');d.innerHTML=html;el.appendChild(d);return d};
+    if(b.type==='heading'){const d=add('<input type="text" placeholder="예: 1. 진공채혈관">');bind(d.querySelector('input'),b,'text')}
+    if(b.type==='card'){
+      const d=add('<div class="swatches"></div><label>번호 (없으면 비워두기)</label><input type="text" class="n"><label>칸 제목</label><input type="text" class="t"><p class="hint">이 칸 아래에 넣는 글·사진은 다음 큰 제목이나 색깔 칸 전까지 이 칸 안에 들어가요.</p>');
+      const sw=d.querySelector('.swatches');
+      COLORS.forEach(c=>{const s=document.createElement('button');s.className='sw'+(b.color===c?' on':'');s.style.background=c;s.onclick=()=>{b.color=c;draw()};sw.appendChild(s)});
+      const pick=document.createElement('input');pick.type='color';pick.value=b.color;pick.oninput=()=>{b.color=pick.value;el.style.borderLeftColor=pick.value};sw.appendChild(pick);
+      bind(d.querySelector('.n'),b,'num');bind(d.querySelector('.t'),b,'text');
+    }
+    if(['text','note','warn'].includes(b.type)){bind(add('<textarea></textarea>').querySelector('textarea'),b,'text')}
+    if(b.type==='link'){
+      const d=add('<label>버튼에 쓸 글자</label><input type="text" class="t" placeholder="예: 환자 라벨 뽑는 법"><label>연결할 자료의 파일 이름</label><input type="text" class="f" placeholder="예: label-patient"><p class="hint">.html은 빼고 파일 이름만 적으세요. 그 자료도 사이트에 올라가 있어야 열려요.</p>');
+      bind(d.querySelector('.t'),b,'text');bind(d.querySelector('.f'),b,'file');
+    }
+    if(b.type==='hotspot'){
+      const d=add((b.src?'<div class="hsedit"><img src="'+b.src+'"></div>':'')+'<button class="light small pick">'+(b.src?'사진 바꾸기':'사진 고르기')+'</button><p class="hint">사진 위를 누르면 그 자리에 번호가 생겨요. 번호마다 이름과 설명을 적으세요.</p><input type="file" accept="image/*" hidden><div class="pts"></div>');
+      const f=d.querySelector('input[type=file]');d.querySelector('.pick').onclick=()=>f.click();
+      f.onchange=()=>{const v=f.files[0];if(v)shrink(v,src=>{b.src=src;b.points=b.points||[];draw()})};
+      const box=d.querySelector('.hsedit');
+      if(box){const img=box.querySelector('img');
+        (b.points||[]).forEach((p,i)=>{const sp=document.createElement('span');sp.className='pdot';sp.style.left=p.x+'%';sp.style.top=p.y+'%';sp.textContent=i+1;box.appendChild(sp)});
+        box.onclick=e=>{if(e.target!==img)return;const r=img.getBoundingClientRect();
+          b.points=b.points||[];
+          b.points.push({x:+((e.clientX-r.left)/r.width*100).toFixed(1),y:+((e.clientY-r.top)/r.height*100).toFixed(1),name:'',desc:''});draw()};
+      }
+      const pts=d.querySelector('.pts');
+      (b.points||[]).forEach((p,i)=>{
+        const row=document.createElement('div');row.className='pt';
+        row.innerHTML='<div class="top"><strong>'+(i+1)+'번</strong><button class="light small" type="button">삭제</button></div><input type="text" class="n" placeholder="도구 이름"><textarea class="ds" placeholder="설명"></textarea>';
+        bind(row.querySelector('.n'),p,'name');bind(row.querySelector('.ds'),p,'desc');
+        row.querySelector('button').onclick=()=>{b.points.splice(i,1);draw()};
+        pts.appendChild(row);
+      });
+    }
+    if(b.type==='video'){
+      const d=add('<p class="hint">방법 1. 영상 파일을 사이트에 함께 올리기</p><button class="light small pickv">영상 파일 고르기</button><input type="file" accept="video/*" hidden><p class="vname hint"></p><p class="hint" style="margin-top:10px">방법 2. 유튜브 주소 붙여넣기 (일부 공개로 올린 영상)</p><input type="text" class="yt" placeholder="https://youtu.be/..."><label>영상 아래 설명 (선택)</label><input type="text" class="cap">');
+      const f=d.querySelector('input[type=file]');d.querySelector('.pickv').onclick=()=>f.click();
+      const nm=d.querySelector('.vname');
+      const show=()=>{nm.textContent=b.file?('고른 영상: '+b.file+' — 이 영상 파일도 html 파일과 같이 업로드해야 재생돼요.'):''};
+      f.onchange=()=>{const v=f.files[0];if(!v)return;
+        if(v.size>60*1024*1024&&!confirm('영상이 커서 로딩이 느릴 수 있어요. 그래도 쓸까요?'))return;
+        b.file=v.name;b.yt='';draw();};
+      const y=d.querySelector('.yt');y.value=b.yt||'';y.oninput=()=>{b.yt=ytid(y.value);if(b.yt)b.file=''};
+      show();bind(d.querySelector('.cap'),b,'caption');
+    }
+    if(b.type==='image'){
+      const d=add((b.src?'<img src="'+b.src+'">':'')+'<button class="light small pick">'+(b.src?'사진 바꾸기':'사진 고르기')+'</button><input type="file" accept="image/*" hidden><label>사진 아래 설명 (선택)</label><input type="text" class="cap">');
+      const f=d.querySelector('input[type=file]');d.querySelector('.pick').onclick=()=>f.click();
+      f.onchange=()=>{if(f.files[0])shrink(f.files[0],src=>{b.src=src;draw()})};
+      bind(d.querySelector('.cap'),b,'caption');
+    }
+    el.querySelectorAll('[data-a]').forEach(btn=>btn.onclick=()=>{
+      const a=btn.dataset.a;
+      if(a==='del'){if(confirm('이 항목을 지울까요?'))blocks.splice(i,1)}
+      if(a==='up'&&i>0)[blocks[i-1],blocks[i]]=[blocks[i],blocks[i-1]];
+      if(a==='down'&&i<blocks.length-1)[blocks[i+1],blocks[i]]=[blocks[i],blocks[i+1]];
+      draw();
+    });
+    wrap.appendChild(el);
+  });
+}
+function bind(inp,b,key){inp.value=b[key]||'';inp.oninput=()=>{b[key]=inp.value}}
+function shrink(file,cb){
+  const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{
+    const max=1000,s=Math.min(1,max/im.width);const c=document.createElement('canvas');
+    c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);
+    const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);
+    cb(c.toDataURL('image/jpeg',0.85));};im.src=r.result;};r.readAsDataURL(file);
+}
+document.querySelectorAll('[data-add]').forEach(btn=>btn.onclick=()=>{
+  const t=btn.dataset.add;const b={type:t};if(t==='card')b.color=COLORS[blocks.filter(x=>x.type==='card').length%COLORS.length];
+  blocks.push(b);draw();window.scrollTo(0,document.body.scrollHeight);
+});
+function data(){return{title:$('title').value.trim(),blocks}}
+function build(){
+  const d=data();
+  const json=JSON.stringify(d).replace(/</g,'\\u003c');
+  const t=d.title.replace(/[&<>]/g,'');
+  return TEMPLATE.split('__TITLE__').join(t).split('__DATA__').join(json);
+}
+function check(){
+  const f=$('fname').value.trim();
+  if(!$('title').value.trim()){msg('자료 제목을 적어주세요.');return null}
+  if(!/^[a-z0-9-]+$/.test(f)){msg('파일 이름은 영어 소문자, 숫자, - 만 쓸 수 있어요.');return null}
+  msg('');return f;
+}
+function msg(t){$('msg').textContent=t;if(t)$('msg').scrollIntoView({block:'center'})}
+function download(href,name){const a=document.createElement('a');a.href=href;a.download=name;document.body.appendChild(a);a.click();a.remove()}
+const _unused=()=>{const f=check();if(!f)return;const url=URL.createObjectURL(new Blob([build()],{type:'text/html'}));download(url,f+'.html');setTimeout(()=>URL.revokeObjectURL(url),5000)};
+$('qrBtn').onclick=()=>{const f=check();if(!f)return;const t=$('qrtmp');t.innerHTML='';
+  new QRCode(t,{text:SITE+f+'.html',width:600,height:600});
+  setTimeout(()=>download(t.querySelector('canvas').toDataURL('image/png'),$('title').value.trim()+'_QR.png'),100)};
+$('openBtn').onclick=()=>$('openFile').click();
+$('saveBtn').onclick=()=>{const f=check();if(!f)return;const url=URL.createObjectURL(new Blob([build()],{type:'text/html'}));download(url,f+'.html');setTimeout(()=>URL.revokeObjectURL(url),5000)};
+$('previewBtn').onclick=()=>{$('pf').srcdoc=build();$('prev').style.display='block'};
+$('closePrev').onclick=()=>$('prev').style.display='none';
+
+$('openFile').onchange=()=>{const file=$('openFile').files[0];if(!file)return;const r=new FileReader();
+  r.onload=()=>{const m=r.result.match(/id="pagedata">([\s\S]*?)<\/script>/);
+    if(!m){msg('이 편집기로 만든 파일만 불러올 수 있어요.');return}
+    const d=JSON.parse(m[1]);$('title').value=d.title||'';$('fname').value=file.name.replace(/\.html$/,'').replace(/ ?\(\d+\)$/,'');blocks=d.blocks||[];draw();msg('');};
+  r.readAsText(file)};
+
+const OWNER='skflschfls12-code',REPO='nurse_edu_LAH',API='https://api.github.com/repos/'+OWNER+'/'+REPO+'/contents/';
+function getKey(){try{return localStorage.getItem('ghkey')||''}catch(e){return ''}}
+function askKey(){const k=prompt('GitHub 열쇠(토큰)를 붙여넣어 주세요.\n이 폰 브라우저에만 저장돼요.',getKey());if(k!==null){try{localStorage.setItem('ghkey',k.trim())}catch(e){} }return getKey()}
+$('keyBtn').onclick=()=>{askKey();msg(getKey()?'열쇠가 저장됐어요.':'')};
+function hdr(extra){const k=getKey()||askKey();if(!k)throw new Error('nokey');return Object.assign({'Authorization':'Bearer '+k,'X-GitHub-Api-Version':'2022-11-28'},extra||{})}
+async function listFiles(){const r=await fetch(API+'?t='+Date.now(),{headers:hdr({'Accept':'application/vnd.github+json'})});if(r.status===401)throw new Error('badkey');if(!r.ok)throw new Error('fail');return (await r.json()).filter(f=>f.name.endsWith('.html')&&!['index.html','editor.html'].includes(f.name))}
+async function rawFile(name){const r=await fetch(API+encodeURIComponent(name)+'?t='+Date.now(),{headers:hdr({'Accept':'application/vnd.github.raw+json'})});if(!r.ok)throw new Error('fail');return r.text()}
+function errMsg(e){msg(e.message==='nokey'?'열쇠를 먼저 설정해 주세요.':e.message==='badkey'?'열쇠가 맞지 않거나 기간이 끝났어요. 열쇠 설정을 다시 해주세요.':'연결에 실패했어요. 인터넷을 확인하고 다시 눌러주세요.')}
+async function fillGroups(){try{const{items}=await getJson('list.json');
+  const gs=[...new Set(items.map(x=>x.group).filter(Boolean))];
+  $('glist').innerHTML=gs.map(g=>'<option value="'+g+'">').join('');
+  const cur=items.find(x=>x.file===$('fname').value.trim()+'.html');
+  if(cur&&cur.group&&!$('group').value)$('group').value=cur.group;}catch(e){}}
+function loadHtml(text,name){const m=text.match(/id="pagedata">([\s\S]*?)<\/script>/);if(!m){msg('이 편집기로 만든 자료만 고칠 수 있어요.');return}
+  const d=JSON.parse(m[1]);$('title').value=d.title||'';$('fname').value=name.replace(/\.html$/,'').replace(/ ?\(\d+\)$/,'');blocks=d.blocks||[];$('list').innerHTML='';draw();msg('');fillGroups()}
+$('listBtn').onclick=async()=>{const L=$('list');L.innerHTML='<p class="hint">불러오는 중...</p>';
+  try{const files=await listFiles();L.innerHTML=files.length?'':'<p class="hint">아직 올린 자료가 없어요.</p>';
+    for(const f of files){const b=document.createElement('button');b.className='it';b.textContent=f.name;L.appendChild(b);
+      b.onclick=async()=>{b.textContent='여는 중...';try{loadHtml(await rawFile(f.name),f.name)}catch(e){errMsg(e)}};
+      rawFile(f.name).then(t=>{const m=t.match(/<title>([^<]*)<\/title>/);if(m&&m[1])b.textContent=m[1]}).catch(()=>{});}
+  }catch(e){L.innerHTML='';errMsg(e)}};
+$('newBtn').onclick=()=>{if(blocks.length&&!confirm('지금 쓰던 내용이 지워져요. 새로 만들까요?'))return;$('title').value='';$('fname').value='';blocks=[];$('list').innerHTML='';draw();msg('')};
+function b64(str){const bytes=new TextEncoder().encode(str);let bin='';for(let i=0;i<bytes.length;i+=0x8000)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000));return btoa(bin)}
+function utf8(b64s){return new TextDecoder().decode(Uint8Array.from(atob(b64s),c=>c.charCodeAt(0)))}
+async function getJson(name){
+  const r=await fetch(API+name+'?t='+Date.now(),{headers:hdr({'Accept':'application/vnd.github+json'})});
+  if(r.status===404)return{items:[],sha:null};
+  if(r.status===401)throw new Error('badkey');
+  if(!r.ok)throw new Error('fail');
+  const j=await r.json();
+  let items=[];try{items=JSON.parse(utf8(j.content.replace(/\n/g,'')))}catch(e){items=[]}
+  return{items:Array.isArray(items)?items:[],sha:j.sha};
+}
+async function putJson(items,sha){
+  const body={message:'목록 갱신',content:b64(JSON.stringify(items,null,1))};if(sha)body.sha=sha;
+  const r=await fetch(API+'list.json',{method:'PUT',headers:hdr({'Accept':'application/vnd.github+json','Content-Type':'application/json'}),body:JSON.stringify(body)});
+  if(!r.ok)throw new Error('fail');
+}
+async function syncList(file,title){
+  const{items,sha}=await getJson('list.json');
+  const g=$('group').value.trim();
+  const i=items.findIndex(x=>x.file===file);
+  if(i>=0){items[i].title=title;if(g)items[i].group=g}
+  else items.push({file,title,group:g});
+  await putJson(items,sha);
+}
+$('manageBtn').onclick=async()=>{const L=$('list');L.innerHTML='<p class="hint">불러오는 중...</p>';
+  try{const{items,sha}=await getJson('list.json');
+    if(!items.length){L.innerHTML='<p class="hint">목록이 비어 있어요. 목록 다시 만들기를 먼저 눌러주세요.</p>';return}
+    const render=()=>{L.innerHTML='';
+      items.forEach((it,i)=>{const row=document.createElement('div');row.className='pt';
+        row.innerHTML='<div class="top"><strong></strong><button class="light small" data-a="up">▲</button><button class="light small" data-a="down">▼</button><button class="light small" data-a="del">빼기</button></div><input type="text" class="g" placeholder="분류 (예: 라벨)">';
+        row.querySelector('strong').textContent=it.title||it.file;
+        const g=row.querySelector('.g');g.value=it.group||'';g.oninput=()=>{it.group=g.value};
+        row.querySelectorAll('[data-a]').forEach(btn=>btn.onclick=()=>{const a=btn.dataset.a;
+          if(a==='del'){if(confirm('목록에서 뺄까요? 자료 자체는 지워지지 않아요.'))items.splice(i,1)}
+          if(a==='up'&&i>0)[items[i-1],items[i]]=[items[i],items[i-1]];
+          if(a==='down'&&i<items.length-1)[items[i+1],items[i]]=[items[i],items[i+1]];
+          render()});
+        L.appendChild(row)});
+      const save=document.createElement('button');save.textContent='목록 저장';save.style.marginTop='10px';
+      save.onclick=async()=>{save.disabled=true;save.textContent='저장 중...';
+        try{const cur=await getJson('list.json');await putJson(items,cur.sha);msg('목록을 저장했어요.')}catch(e){errMsg(e)}
+        finally{save.disabled=false;save.textContent='목록 저장'}};
+      L.appendChild(save)};
+    render();
+  }catch(e){L.innerHTML='';errMsg(e)}};
+$('rebuildBtn').onclick=async()=>{const btn=$('rebuildBtn');btn.disabled=true;btn.textContent='만드는 중...';
+  try{const files=await listFiles();const items=[];
+    const cur=await getJson('list.json');
+    for(const f of files){const t=await rawFile(f.name);const m=t.match(/<title>([^<]*)<\/title>/);
+      const old=cur.items.find(x=>x.file===f.name);
+      items.push({file:f.name,title:(m&&m[1])?m[1]:f.name.replace(/\.html$/,''),group:old?(old.group||''):''});}
+    items.sort((a,b)=>{const ia=cur.items.findIndex(x=>x.file===a.file),ib=cur.items.findIndex(x=>x.file===b.file);
+      return (ia<0?999:ia)-(ib<0?999:ib)});
+    await putJson(items,cur.sha);
+    msg('목록을 다시 만들었어요. ('+items.length+'개)');
+  }catch(e){errMsg(e)}finally{btn.disabled=false;btn.textContent='목록 다시 만들기'}};
+$('pushBtn').onclick=async()=>{const f=check();if(!f)return;const btn=$('pushBtn');btn.disabled=true;btn.textContent='저장 중...';
+  try{const name=f+'.html';const files=await listFiles();const ex=files.find(x=>x.name===name);
+    if(ex&&!confirm('"'+name+'" 자료가 이미 있어요. 고친 내용으로 바꿀까요?')){return}
+    const body={message:(ex?'수정: ':'추가: ')+$('title').value.trim(),content:b64(build())};if(ex)body.sha=ex.sha;
+    const r=await fetch(API+encodeURIComponent(name),{method:'PUT',headers:hdr({'Accept':'application/vnd.github+json','Content-Type':'application/json'}),body:JSON.stringify(body)});
+    if(r.status===401)throw new Error('badkey');if(!r.ok)throw new Error('fail');
+    try{await syncList(name,$('title').value.trim())}catch(e){}
+    msg('저장했어요. 1~2분 뒤 사이트에 반영돼요.');
+  }catch(e){errMsg(e)}finally{btn.disabled=false;btn.textContent='사이트에 저장'}};
+draw();
+</script></body></html>
