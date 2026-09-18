@@ -43,5 +43,10 @@
   "file": "sterile-kit.html",
   "title": "멸균 세트",
   "group": "처치실"
+ },
+ {
+  "file": "material.html",
+  "title": "처치 준비",
+  "group": "처치실"
  }
 ]
