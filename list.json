@@ -28,5 +28,10 @@
   "file": "specimen-label.html",
   "title": "검체 라벨 부착법 - 혈액편",
   "group": "라벨"
+ },
+ {
+  "file": "specimen-urine.html",
+  "title": "검체 라벨 부착법 - 소변 및 기타",
+  "group": "라벨"
  }
 ]
