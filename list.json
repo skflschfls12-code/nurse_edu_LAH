@@ -13,5 +13,10 @@
   "file": "checklist-shared.html",
   "title": "체크리스트(공통)",
   "group": "체크리스트"
+ },
+ {
+  "file": "label-fluid.html",
+  "title": "수액 라벨 뽑는 법",
+  "group": "라벨"
  }
 ]
