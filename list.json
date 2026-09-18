@@ -63,5 +63,10 @@
   "file": "consultation-visit.html",
   "title": "진료 외 방문",
   "group": "Nedis"
+ },
+ {
+  "file": "ktas-er.html",
+  "title": "응급실 KTAS 분류 방법",
+  "group": "Nedis"
  }
 ]
