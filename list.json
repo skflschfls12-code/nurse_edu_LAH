@@ -23,5 +23,10 @@
   "file": "label-patient.html",
   "title": "환자 라벨 뽑는 법",
   "group": "라벨"
+ },
+ {
+  "file": "specimen-label.html",
+  "title": "검체 라벨 부착법 - 혈액편",
+  "group": "라벨"
  }
 ]
