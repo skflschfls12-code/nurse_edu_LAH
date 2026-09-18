@@ -38,5 +38,10 @@
   "file": "sterile-kit.html",
   "title": "멸균 세트",
   "group": "처치실"
+ },
+ {
+  "file": "label-specimen.html",
+  "title": "검체 라벨 뽑는 법",
+  "group": "라벨"
  }
 ]
