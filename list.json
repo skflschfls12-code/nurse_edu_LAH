@@ -33,5 +33,10 @@
   "file": "specimen-urine.html",
   "title": "검체 라벨 부착법 - 소변 및 기타",
   "group": "라벨"
+ },
+ {
+  "file": "sterile-kit.html",
+  "title": "멸균 세트",
+  "group": "처치실"
  }
 ]
