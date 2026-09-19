@@ -68,5 +68,10 @@
   "file": "consultation-visit.html",
   "title": "진료 외 방문",
   "group": "Nedis"
+ },
+ {
+  "file": "routine-n.html",
+  "title": "N 루틴 근무",
+  "group": "루틴"
  }
 ]
