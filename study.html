@@ -78,7 +78,7 @@ textarea.t{min-height:110px;resize:vertical}
 .cell.done{background:#E6F4EC;border-color:#1F9E6E}.cell.done small{color:#1F7A56}
 .cell.sel{border:2.5px solid #20242B;box-shadow:2px 2px 0 rgba(32,36,43,.25)}
 .sh{font-style:normal;font-size:.7rem;font-weight:800;color:#fff;background:#9A968D;border-radius:5px;padding:1px 5px;line-height:1.4}
-.sh.sD{background:#E0A526}.sh.sE{background:#D9642E}.sh.sN{background:#34457E}
+.sh.sD{background:#E0A526}.sh.sE{background:#D9642E}.sh.sN{background:#34457E}.sh.sS{background:#8348A8}
 .pl{font-size:.8rem;color:#6E6A61;margin:0 2px 8px;font-weight:700}
 .gd{background:#FFF9E3;border:2px solid #20242B;border-radius:14px;padding:15px 16px;margin-top:4px;box-shadow:3px 3px 0 rgba(32,36,43,.18)}
 .gd h3{margin:0 0 8px;font-size:1rem;font-weight:800}
@@ -91,11 +91,12 @@ textarea.t{min-height:110px;resize:vertical}
 .srow:last-child{border-bottom:0}
 .srow b{width:26px;font-size:.95rem}
 .srow b.sat{color:#2E6FD9}.srow b.sun{color:#D93B3B}
-.seg{display:flex;gap:5px;flex:1}
+.seg{display:flex;gap:4px;flex:1}
 .seg button{flex:1;font:inherit;font-weight:800;font-size:.85rem;padding:9px 0;border-radius:9px;border:1.5px solid #D8D3C7;background:#FBFAF7;color:#6E6A61;cursor:pointer}
 .seg button.on.D{background:#E0A526;border-color:#E0A526;color:#fff}
 .seg button.on.E{background:#D9642E;border-color:#D9642E;color:#fff}
 .seg button.on.N{background:#34457E;border-color:#34457E;color:#fff}
+.seg button.on.S{background:#8348A8;border-color:#8348A8;color:#fff}
 .seg button.on.OFF{background:#8A857B;border-color:#8A857B;color:#fff}
 .cell.off{background:#F1EFEA;border-color:#E3DFD5}.cell.off small{color:#9A968D}
 .cell.none{background:none;border:1.5px dashed #D8D3C7}.cell.none small{color:#C2BDB2}
@@ -175,8 +176,9 @@ $('tC').onclick=()=>tab('C');$('tS').onclick=()=>tab('S');$('tQ').onclick=()=>ta
 
 let rows=[],sched={},done={},sel=null,W=1,swk=1;
 const DOW=['월','화','수','목','금','토','일'];
-const working=s=>s==='D'||s==='E'||s==='N';
-function itemsFor(wk,dow,sh){return rows.filter(r=>(!r.wk||r.wk===wk)&&(r.dow<0||r.dow===dow)&&(r.shift===sh||r.shift==='공통'))}
+const working=s=>s==='D'||s==='E'||s==='N'||s==='S';
+const sft=r=>r.shifts||[r.shift||'공통'];
+function itemsFor(wk,dow,sh){return rows.filter(r=>(!r.wk||r.wk===wk)&&(r.dow<0||r.dow===dow)&&(sft(r).includes(sh)||sft(r).includes('공통')))}
 const dkey=(wk,dow)=>wk+'주 '+DOW[dow];
 function stats(wk,dow){const sh=(sched[wk]||[])[dow]||'';if(!working(sh))return{sh,n:0,d:0};
   const its=itemsFor(wk,dow,sh);return{sh,n:its.length,d:its.filter(r=>done[dkey(wk,dow)+'|'+r.text]).length}}
@@ -205,7 +207,7 @@ function render(){
     o+='</div>'});
   o+='</div>';
   if(sel){const[w,i]=sel.split('-').map(Number);const sh=sched[w][i];const its=itemsFor(w,i,sh);const key=dkey(w,i);
-    const own=its.filter(r=>r.shift!=='공통'),com=its.filter(r=>r.shift==='공통');
+    const own=its.filter(r=>!sft(r).includes('공통')),com=its.filter(r=>sft(r).includes('공통'));
     const li=r=>{const on=!!done[key+'|'+r.text];return '<label class="it'+(on?' ok':'')+'"><input type="checkbox" data-w="'+w+'" data-i="'+i+'" data-t="'+esc(r.text)+'"'+(on?' checked':'')+'><span>'+esc(r.text)+'</span></label>'};
     const s=stats(w,i);
     o+='<div class="day"><div class="dh'+(s.n&&s.d===s.n?' all':'')+'">'+(W>1?w+'주 ':'')+DOW[i]+'요일 · '+sh+'<span>'+s.d+' / '+s.n+'</span></div>'+
@@ -217,7 +219,7 @@ function drawSched(){
   $('wks').innerHTML=weeks().map(w=>'<button type="button" data-w="'+w+'" class="'+(w===swk?'on':'')+'">'+w+'주</button>').join('');
   const cur=(sched[swk]||['','','','','','','']).slice();
   $('srows').innerHTML=DOW.map((d,i)=>'<div class="srow"><b class="'+(i===5?'sat':i===6?'sun':'')+'">'+d+'</b><div class="seg" data-i="'+i+'">'+
-    ['D','E','N','OFF'].map(s=>'<button type="button" class="'+s+(cur[i]===s?' on':'')+'" data-s="'+s+'">'+s+'</button>').join('')+'</div></div>').join('');
+    ['D','E','N','S','OFF'].map(s=>'<button type="button" class="'+s+(cur[i]===s?' on':'')+'" data-s="'+s+'">'+s+'</button>').join('')+'</div></div>').join('');
   $('smsg').textContent='';
 }
 $('wks').addEventListener('click',e=>{const b=e.target.closest('button');if(b){swk=+b.dataset.w;drawSched()}});
