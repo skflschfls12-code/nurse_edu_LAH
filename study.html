@@ -149,7 +149,8 @@ textarea.t{min-height:110px;resize:vertical}
 
   <div id="pC">
     <div class="box pbox"><div class="ph"><b>전체 진행</b><span class="pct" id="pct">0%</span></div>
-      <div class="prog" id="prog"><i id="bar" style="width:0"></i></div><div class="pt" id="ptxt"></div></div>
+      <div class="prog" id="prog"><i id="bar" style="width:0"></i></div>
+      <div class="pmsg hide" id="pmsg"></div><div class="pt" id="ptxt"></div></div>
     <div id="days"><div class="note">불러오는 중...</div></div>
     <div id="guide"></div>
   </div>
@@ -216,7 +217,9 @@ const dkey=(wk,dow)=>wk+'주 '+DOW[dow];
 function stats(wk,dow){const sh=(sched[wk]||[])[dow]||'';if(!working(sh))return{sh,n:0,d:0};
   const its=itemsFor(wk,dow,sh);return{sh,n:its.length,d:its.filter(r=>done[dkey(wk,dow)+'|'+r.text]).length}}
 function weeks(){const a=[];for(let i=1;i<=W;i++)a.push(i);return a}
-let lastPct=null;
+let lastPct=null,CH={};
+function curWeek(){for(const w of weeks()){for(let i=0;i<7;i++){const s=stats(w,i);if(s.n&&s.d<s.n)return w}}return W}
+function weekDone(w){let d=0,n=0;for(let i=0;i<7;i++){const s=stats(w,i);d+=s.d;n+=s.n}return{d,n}}
 let MSG=[[0,'첫 체크를 해볼까요? 시작이 반이에요 🌱'],[1,'좋은 출발이에요! 🌱'],[25,'잘하고 있어요! 벌써 4분의 1 💪'],[50,'절반 넘었어요! 이 페이스 그대로 🏃'],[75,'거의 다 왔어요, 조금만 더! ✨'],[100,'전부 완료! 정말 수고 많았어요 🎉']];
 function confetti(){const cs=['#F6C744','#F29E38','#1F9E6E','#2E6FD9','#D93B3B','#8348A8'];
   for(let i=0;i<70;i++){const s=document.createElement('i');s.className='cf';
@@ -230,6 +233,13 @@ function progress(){
   $('bar').style.width=pct+'%';$('pct').textContent=n?pct+'%':'–';
   $('prog').classList.toggle('full',n>0&&pct===100);
   $('ptxt').textContent=n?(d+' / '+n+' 완료'):'근무표를 입력하면 진행률이 나와요.';
+  let m='';
+  if(n){const cw=curWeek(),wd=weekDone(cw);
+    if(pct===100&&CH.end)m=CH.end;
+    else if(d===0&&CH.start)m=CH.start;
+    else if(pct<100&&wd.n&&wd.d===0&&CH['w'+cw])m=CH['w'+cw];}
+  const el=$('pmsg');el.classList.toggle('hide',!m);
+  if(el.textContent!==m){el.textContent=m;if(m&&lastPct!==null){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')}}
   if(lastPct!==null&&n&&pct===100&&lastPct<100)confetti();
   if(n)lastPct=pct;
 }
@@ -283,6 +293,9 @@ async function loadChecklist(){
   $('days').innerHTML='<div class="note">불러오는 중...</div>';
   try{const r=await call({action:'checklist',id:ID});if(!r.ok)throw 0;
     if(Array.isArray(r.cheers))MSG=r.cheers.map(x=>[x.p,x.t]).sort((a,b)=>a[0]-b[0]);
+    CH={};(r.cheers||[]).forEach(x=>{const k=String(x.k).trim();let key='';
+      if(/^(시작|처음)/.test(k))key='start';else if(/^(완료|끝|마지막)/.test(k))key='end';else{const m=k.match(/(\d+)\s*주/);if(m)key='w'+m[1]}
+      if(key)CH[key]=x.t});
     rows=r.rows||[];sched={};Object.keys(r.sched||{}).forEach(k=>sched[+k]=r.sched[k]);done=r.done||{};
     const maxWk=Math.max(1,...rows.map(x=>x.wk||0),...Object.keys(sched).map(Number));
     W=(r.me&&r.me.weeks)||maxWk;swk=1;for(let w=1;w<=W;w++){if(!sched[w]){swk=w;break}}
