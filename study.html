@@ -111,6 +111,20 @@ textarea.t{min-height:110px;resize:vertical}
 .qa .who2{font-size:.82rem;font-weight:800;color:#20242B;margin-bottom:2px}
 .qa textarea.t{min-height:80px;margin-top:10px;font-size:.93rem}
 .qa .btn{padding:10px;font-size:.92rem}
+
+.pbox{position:relative;overflow:hidden}
+.ph{display:flex;justify-content:space-between;align-items:baseline}
+.pct{font-size:.95rem;font-weight:800;color:#1F9E6E;font-variant-numeric:tabular-nums}
+.prog{height:10px;background:#E8E4DA;border-radius:6px;overflow:hidden;margin-top:8px}
+.prog i{position:relative;display:block;height:100%;background:#1F9E6E;border-radius:6px;overflow:hidden;transition:width .5s ease}
+.prog i::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);background-size:220% 100%;animation:sheen 2.4s ease-in-out infinite}
+@keyframes sheen{from{background-position:120% 0}to{background-position:-120% 0}}
+.prog.full i{background:#E9A53A}
+.pmsg{margin-top:8px;font-size:.88rem;font-weight:600;color:#4A4E56}
+.pmsg.pop{animation:pop .45s ease}
+@keyframes pop{0%{transform:scale(.9);opacity:.3}60%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+.cf{position:fixed;top:-12px;width:9px;height:14px;border-radius:2px;z-index:30;pointer-events:none;animation:fall var(--d) cubic-bezier(.2,.6,.4,1) forwards}
+@keyframes fall{to{transform:translate(var(--x),105vh) rotate(var(--r));opacity:.9}}
 .hide{display:none}
 .err{color:#C0392B;font-size:.88rem;margin-top:8px}
 </style></head><body><main>
@@ -134,7 +148,9 @@ textarea.t{min-height:110px;resize:vertical}
   <div class="tabs" id="tabs"><button id="tC" class="on">체크리스트</button><button id="tS">근무표</button><button id="tQ">질문하기</button></div>
 
   <div id="pC">
-    <div class="box"><b>전체 진행</b><div class="prog"><i id="bar" style="width:0"></i></div><div class="pt" id="ptxt"></div></div>
+    <div class="box pbox"><div class="ph"><b>전체 진행</b><span class="pct" id="pct">0%</span></div>
+      <div class="prog" id="prog"><i id="bar" style="width:0"></i></div>
+      <div class="pmsg" id="pmsg"></div><div class="pt" id="ptxt"></div></div>
     <div id="days"><div class="note">불러오는 중...</div></div>
     <div id="guide"></div>
   </div>
@@ -201,9 +217,25 @@ const dkey=(wk,dow)=>wk+'주 '+DOW[dow];
 function stats(wk,dow){const sh=(sched[wk]||[])[dow]||'';if(!working(sh))return{sh,n:0,d:0};
   const its=itemsFor(wk,dow,sh);return{sh,n:its.length,d:its.filter(r=>done[dkey(wk,dow)+'|'+r.text]).length}}
 function weeks(){const a=[];for(let i=1;i<=W;i++)a.push(i);return a}
+let lastPct=null;
+let MSG=[[0,'첫 체크를 해볼까요? 시작이 반이에요 🌱'],[1,'좋은 출발이에요! 🌱'],[25,'잘하고 있어요! 벌써 4분의 1 💪'],[50,'절반 넘었어요! 이 페이스 그대로 🏃'],[75,'거의 다 왔어요, 조금만 더! ✨'],[100,'전부 완료! 정말 수고 많았어요 🎉']];
+function confetti(){const cs=['#F6C744','#F29E38','#1F9E6E','#2E6FD9','#D93B3B','#8348A8'];
+  for(let i=0;i<70;i++){const s=document.createElement('i');s.className='cf';
+    s.style.left=(Math.random()*100)+'vw';s.style.background=cs[i%cs.length];
+    s.style.setProperty('--x',(Math.random()*160-80)+'px');s.style.setProperty('--r',(Math.random()*900-450)+'deg');
+    s.style.setProperty('--d',(1.6+Math.random()*1.4)+'s');s.style.animationDelay=(Math.random()*.35)+'s';
+    document.body.appendChild(s);setTimeout(()=>s.remove(),3600)}}
 function progress(){
   let n=0,d=0;weeks().forEach(w=>{for(let i=0;i<7;i++){const s=stats(w,i);n+=s.n;d+=s.d}});
-  $('bar').style.width=(n?Math.round(d/n*100):0)+'%';$('ptxt').textContent=n?(d+' / '+n+' 완료'):'근무표를 입력하면 진행률이 나와요.';
+  const pct=n?Math.round(d/n*100):0;
+  $('bar').style.width=pct+'%';$('pct').textContent=n?pct+'%':'–';
+  $('prog').classList.toggle('full',n>0&&pct===100);
+  $('ptxt').textContent=n?(d+' / '+n+' 완료'):'근무표를 입력하면 진행률이 나와요.';
+  let m='';if(n){for(const[t,s]of MSG)if(pct>=t)m=s}
+  const el=$('pmsg');
+  if(el.textContent!==m){el.textContent=m;if(lastPct!==null){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')}}
+  if(lastPct!==null&&n&&pct===100&&lastPct<100)confetti();
+  if(n)lastPct=pct;
 }
 function render(){
   const any=Object.keys(sched).length;
@@ -254,6 +286,7 @@ $('sSave').onclick=async()=>{
 async function loadChecklist(){
   $('days').innerHTML='<div class="note">불러오는 중...</div>';
   try{const r=await call({action:'checklist',id:ID});if(!r.ok)throw 0;
+    if(r.cheers&&r.cheers.length)MSG=r.cheers.map(x=>[x.p,x.t]).sort((a,b)=>a[0]-b[0]);
     rows=r.rows||[];sched={};Object.keys(r.sched||{}).forEach(k=>sched[+k]=r.sched[k]);done=r.done||{};
     const maxWk=Math.max(1,...rows.map(x=>x.wk||0),...Object.keys(sched).map(Number));
     W=(r.me&&r.me.weeks)||maxWk;swk=1;for(let w=1;w<=W;w++){if(!sched[w]){swk=w;break}}
@@ -264,12 +297,18 @@ async function loadChecklist(){
   }catch(e){$('days').innerHTML='<div class="note">체크리스트를 불러오지 못했어요.</div>'}
 }
 $('days').addEventListener('click',e=>{const b=e.target.closest('.cell[data-k]');if(b){sel=b.dataset.k;render()}});
-$('days').addEventListener('change',async e=>{
+let chain=Promise.resolve();
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+async function sendCheck(p){for(let t=0;t<3;t++){try{const r=await call(p);if(r&&r.ok)return true}catch(e){}await wait(1200*(t+1))}return false}
+function toast(m){let t=$('toast');if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#20242B;color:#fff;padding:10px 16px;border-radius:10px;font-size:.88rem;z-index:20;max-width:90%;text-align:center';document.body.appendChild(t)}
+  t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',2500)}
+$('days').addEventListener('change',e=>{
   const cb=e.target;if(!cb.dataset.t)return;const w=+cb.dataset.w,i=+cb.dataset.i,text=cb.dataset.t;
   const date=dkey(w,i),k=date+'|'+text,on=cb.checked;
   if(on)done[k]=true;else delete done[k];render();
-  try{const r=await call({action:'check',id:ID,date,shift:sched[w][i],text,on});if(!r.ok)throw 0}
-  catch(x){if(!on)done[k]=true;else delete done[k];render();alert('저장하지 못했어요. 다시 눌러주세요.')}
+  const p={action:'check',id:ID,date,shift:sched[w][i],text,on};
+  chain=chain.then(async()=>{const ok=await sendCheck(p);
+    if(!ok){if(!on)done[k]=true;else delete done[k];render();toast('저장하지 못했어요. 인터넷을 확인하고 다시 눌러주세요.')}});
 });
 
 function shrinkImg(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{
