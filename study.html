@@ -149,8 +149,7 @@ textarea.t{min-height:110px;resize:vertical}
 
   <div id="pC">
     <div class="box pbox"><div class="ph"><b>전체 진행</b><span class="pct" id="pct">0%</span></div>
-      <div class="prog" id="prog"><i id="bar" style="width:0"></i></div>
-      <div class="pmsg" id="pmsg"></div><div class="pt" id="ptxt"></div></div>
+      <div class="prog" id="prog"><i id="bar" style="width:0"></i></div><div class="pt" id="ptxt"></div></div>
     <div id="days"><div class="note">불러오는 중...</div></div>
     <div id="guide"></div>
   </div>
@@ -231,9 +230,6 @@ function progress(){
   $('bar').style.width=pct+'%';$('pct').textContent=n?pct+'%':'–';
   $('prog').classList.toggle('full',n>0&&pct===100);
   $('ptxt').textContent=n?(d+' / '+n+' 완료'):'근무표를 입력하면 진행률이 나와요.';
-  let m='';if(n){for(const[t,s]of MSG)if(pct>=t)m=s}
-  const el=$('pmsg');
-  if(el.textContent!==m){el.textContent=m;if(lastPct!==null){el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop')}}
   if(lastPct!==null&&n&&pct===100&&lastPct<100)confetti();
   if(n)lastPct=pct;
 }
@@ -286,7 +282,7 @@ $('sSave').onclick=async()=>{
 async function loadChecklist(){
   $('days').innerHTML='<div class="note">불러오는 중...</div>';
   try{const r=await call({action:'checklist',id:ID});if(!r.ok)throw 0;
-    if(r.cheers&&r.cheers.length)MSG=r.cheers.map(x=>[x.p,x.t]).sort((a,b)=>a[0]-b[0]);
+    if(Array.isArray(r.cheers))MSG=r.cheers.map(x=>[x.p,x.t]).sort((a,b)=>a[0]-b[0]);
     rows=r.rows||[];sched={};Object.keys(r.sched||{}).forEach(k=>sched[+k]=r.sched[k]);done=r.done||{};
     const maxWk=Math.max(1,...rows.map(x=>x.wk||0),...Object.keys(sched).map(Number));
     W=(r.me&&r.me.weeks)||maxWk;swk=1;for(let w=1;w<=W;w++){if(!sched[w]){swk=w;break}}
