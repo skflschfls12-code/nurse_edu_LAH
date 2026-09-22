@@ -166,10 +166,10 @@ textarea.t{min-height:110px;resize:vertical}
   </div>
 
   <div id="pQ" class="hide">
-    <div class="warn">환자 이름, 등록번호 등 <b>환자의 개인정보는 절대 적지 마세요.</b> 사진에도 환자 얼굴, 이름표, 모니터 화면이 나오지 않게 해주세요.</div>
+    <div class="warn">환자 이름, 등록번호 등 <b>환자 개인 정보는 적지 마세요.</b> 사진에도 환자 얼굴, 이름표, 모니터 화면이 나오지 않게 해주세요.</div>
     <div class="box" style="margin-top:12px">
-      <label class="l" for="qtext">질문</label>
-      <textarea class="t" id="qtext" placeholder="근무 중 궁금했던 것, 혹은 기타 사항을 편하게 남겨주세요."></textarea>
+      <label class="l" for="qtext">궁금한 것</label>
+      <textarea class="t" id="qtext" placeholder="근무 중 혹은 기타 문의 사항을 편하게 남겨주세요."></textarea>
       <div class="att" id="qatt"></div>
       <button class="btn" id="askBtn">질문 남기기</button>
       <p class="err" id="qerr"></p>
@@ -234,7 +234,7 @@ function progress(){
   $('prog').classList.toggle('full',n>0&&pct===100);
   $('ptxt').textContent=n?(d+' / '+n+' 완료'):'근무표를 입력하면 진행률이 나와요.';
   let m='';
-  if(n){const cw=curWeek(),wd=weekDone(cw);
+  if(n){const cw=sel?+sel.split('-')[0]:curWeek(),wd=weekDone(cw);
     if(pct===100&&CH.end)m=CH.end;
     else if(d===0&&CH.start)m=CH.start;
     else if(pct<100&&wd.n&&wd.d===0&&CH['w'+cw])m=CH['w'+cw];}
@@ -293,7 +293,7 @@ async function loadChecklist(){
   $('days').innerHTML='<div class="note">불러오는 중...</div>';
   try{const r=await call({action:'checklist',id:ID});if(!r.ok)throw 0;
     if(Array.isArray(r.cheers))MSG=r.cheers.map(x=>[x.p,x.t]).sort((a,b)=>a[0]-b[0]);
-    CH={};(r.cheers||[]).forEach(x=>{const k=String(x.k).trim();let key='';
+    CH={};(r.cheers||[]).slice().sort((a,b)=>(a.own?1:0)-(b.own?1:0)).forEach(x=>{const k=String(x.k).trim();let key='';
       if(/^(시작|처음)/.test(k))key='start';else if(/^(완료|끝|마지막)/.test(k))key='end';else{const m=k.match(/(\d+)\s*주/);if(m)key='w'+m[1]}
       if(key)CH[key]=x.t});
     rows=r.rows||[];sched={};Object.keys(r.sched||{}).forEach(k=>sched[+k]=r.sched[k]);done=r.done||{};
