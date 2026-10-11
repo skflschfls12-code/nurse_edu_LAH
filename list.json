@@ -83,5 +83,20 @@
   "file": "inti-phdrugs.html",
   "title": "인티팜 향정•마약 불출",
   "group": "향정•마약류 불출"
+ },
+ {
+  "file": "intipam.html",
+  "title": "인티팜 사용 방법",
+  "group": ""
+ },
+ {
+  "file": "sets.html",
+  "title": "처치세트 구성",
+  "group": ""
+ },
+ {
+  "file": "study.html",
+  "title": "교육 체크리스트 · 질문",
+  "group": ""
  }
 ]
