@@ -103,5 +103,10 @@
   "file": "tip-phdrugs.html",
   "title": "처방전 및 대장 입력 TIP",
   "group": "향정•마약류 불출"
+ },
+ {
+  "file": "registrations.html",
+  "title": "진료 가능 등록 관리 방법",
+  "group": ""
  }
 ]
