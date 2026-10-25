@@ -272,6 +272,13 @@ footer{max-width:1040px;margin:0 auto;padding:0 16px 40px;display:flex;gap:8px;a
 <!-- 통계 -->
 <section class="pane" id="p-stat">
   <div class="card">
+    <h2>지난 통계 엑셀 불러오기</h2>
+    <p class="desc">쓰던 월별 통계 엑셀(합계 + 1~31일 시트)을 올리면 날짜별·의사별 숫자와 주취자가 자동 입력. 여러 달 파일 한 번에 선택 가능.</p>
+    <label class="drop" id="statDrop"><input type="file" id="statFile" accept=".xls,.xlsx,.xlsm" multiple hidden>
+      <b>통계 엑셀 파일들을 끌어다 놓거나 눌러서 선택</b><span class="muted">예: 26년 1월 통계.xls, 26년 2월 통계.xls …</span></label>
+    <div class="prev" id="statPrev"></div>
+  </div>
+  <div class="card">
     <div class="daynav">
       <button class="btn icon" data-dd="-1">‹</button><select class="daySel"></select><button class="btn icon" data-dd="1">›</button>
       <span class="info dayInfo"></span>
@@ -462,15 +469,18 @@ const dimOf=k=>{const[y,m]=k.split('-').map(Number);return new Date(y,m,0).getDa
 const dim=()=>dimOf(ym);
 const wd=d=>{const[y,m]=ym.split('-').map(Number);return new Date(y,m-1,d).getDay()};
 
-function openMonth(k){
-  ym=k;
+function ensureMonth(k){
   if(!DB.months[k]){
     // 새 달: 가장 가까운 이전 달 명단을 이어받음
     const prev=Object.keys(DB.months).filter(x=>x<k).sort().pop()||Object.keys(DB.months).sort().pop();
     const p=prev&&DB.months[prev];
     DB.months[k]={nurses:p?p.nurses.map(x=>({...x})):[],doctors:p?p.doctors.map(x=>({...x})):[],duty:{},stats:{}};
   }
-  M=DB.months[k];
+  return DB.months[k];
+}
+function openMonth(k){
+  ym=k;
+  M=ensureMonth(k);
   if(day>dim())day=dim();
   const[y,m]=k.split('-');
   if(![...$('#ySel').options].some(o=>o.value===y))$('#ySel').insertAdjacentHTML('beforeend',`<option value="${y}">${y}년</option>`);
@@ -960,6 +970,92 @@ $('#p-stat').addEventListener('keydown',e=>{
   const all=$$('#p-stat input[type=number]');const i=all.indexOf(e.target);(all[i+1]||all[0]).focus();
 });
 $('#p-stat').addEventListener('focusin',e=>{if(e.target.select)e.target.select()});
+
+/* ---------- 지난 통계 엑셀 불러오기 ---------- */
+let statImp=null;
+function parseStatBook(wb,fname){
+  const out={};let fy=null,fm=null;
+  const fmm=String(fname).match(/(\d{2,4})\s*년\s*(\d{1,2})\s*월/);if(fmm){fy=+fmm[1]<100?2000+ +fmm[1]:+fmm[1];fm=+fmm[2]}
+  wb.SheetNames.forEach(sn=>{
+    const aoa=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:''});
+    let y=null,m=null,d=null;
+    for(let r=0;r<Math.min(6,aoa.length)&&!d;r++)for(const v of aoa[r]||[]){const t=String(v).match(/(\d{4})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일/);if(t){y=+t[1];m=+t[2];d=+t[3];break}}
+    if(!d){if(/^\d{1,2}$/.test(sn.trim())&&fy){y=fy;m=fm;d=+sn}else return} // 합계 시트 등은 건너뜀
+    // 귀가·입원… 머리 줄
+    let hr=-1,col={};
+    for(let r=0;r<Math.min(15,aoa.length);r++){const row=(aoa[r]||[]).map(v=>String(v).trim());const c={};CATS.forEach(k=>{const i=row.indexOf(k);if(i>=0)c[k]=i});if(Object.keys(c).length>=5){hr=r;col=c;break}}
+    if(hr<0)return;
+    const day={doc:{},etc:CATS.map(()=>0),drunk:[0,0,0]};let r=hr+1;
+    for(;r<aoa.length;r++){
+      const row=aoa[r]||[];const lb=String(row[0]??'').trim();
+      if(lb==='주취자')break;
+      if(lb==='합계'||lb==='계')continue;
+      const v=CATS.map(k=>col[k]!==undefined?num(row[col[k]]):0);
+      if(!lb){if(v.some(x=>x))day.etc=addv(day.etc,v);continue}
+      if(lb==='기타')day.etc=addv(day.etc,v);else day.doc[lb]=addv(day.doc[lb]||zero(),v);
+    }
+    for(;r<aoa.length;r++){ // 주취자: 귀가·입원·전원 머리 다음 줄
+      const row=(aoa[r]||[]).map(v=>String(v).trim());const i=DCATS.map(k=>row.indexOf(k));
+      if(i.every(x=>x>=0)){const nx=aoa[r+1]||[];day.drunk=i.map(x=>num(nx[x]));break}
+    }
+    const k=`${y}-${pad(m)}`;(out[k]=out[k]||{})[d]=day;
+  });
+  return out;
+}
+// "er16 하" → 그 달 의사 (없으면 새로 만듦)
+function docForLabel(X,lb){
+  const key=nkey(lb);let p=X.doctors.find(x=>nkey(dlbl(x))===key);
+  if(p)return p;
+  const m=lb.match(/^([A-Za-z]+\s?\d+)\s*(.*)$/),code=m?m[1].replace(/\s/g,''):'',core=(m?m[2]:lb).trim();
+  if(code){p=X.doctors.find(x=>x.code===code);if(p)return p}
+  p={id:uid(),code,name:'',nick:core?'Dr'+core:''};X.doctors.push(p);return p;
+}
+function readStatFiles(files){
+  if(!window.XLSX){alert('엑셀 불러오기 실패.');return}
+  const all={},bad=[];let left=files.length;
+  [...files].forEach(f=>{const rd=new FileReader();
+    rd.onload=()=>{try{const wb=XLSX.read(rd.result,{type:'array'});const r=parseStatBook(wb,f.name);
+        if(!Object.keys(r).length)bad.push(f.name);Object.entries(r).forEach(([k,ds])=>Object.assign(all[k]=all[k]||{},ds))}catch(e){bad.push(f.name)}
+      if(--left===0){statImp=all;renderStatImp(bad)}};
+    rd.readAsArrayBuffer(f)});
+}
+function renderStatImp(bad){
+  const ks=Object.keys(statImp).sort();
+  let h='';
+  if(bad.length)h+=`<p class="warn">읽지 못한 파일: ${bad.map(esc).join(', ')}</p>`;
+  if(!ks.length){$('#statPrev').innerHTML=h+'<p class="warn">통계 시트(“2026년 1월 1일” 제목, 귀가·입원… 머리줄)를 찾지 못함.</p>';return}
+  h+='<div class="scroll"><table class="pv"><tr><th>적용</th><th>달</th><th>숫자 있는 날</th><th>총계</th><th>주취자</th><th>의사</th><th>이미 입력된 날</th></tr>'+ks.map(k=>{
+    const ds=statImp[k],[y,m]=k.split('-').map(Number),X=DB.months[k];
+    const days=Object.entries(ds).filter(([d,v])=>Object.values(v.doc).some(a=>sm(a))||sm(v.etc)||sm(v.drunk));
+    const tot=days.reduce((a,[d,v])=>a+Object.values(v.doc).reduce((x,arr)=>x+sm(arr),0)+sm(v.etc),0);
+    const dr=days.reduce((a,[d,v])=>a+sm(v.drunk),0);
+    const labels=[...new Set(Object.values(ds).flatMap(v=>Object.entries(v.doc).filter(([l,a])=>sm(a)).map(([l])=>l)))];
+    const near=X||DB.months[Object.keys(DB.months).filter(x=>x<k).sort().pop()||Object.keys(DB.months).sort().pop()]||{doctors:[]};
+    const known=labels.filter(l=>near.doctors.some(p=>nkey(dlbl(p))===nkey(l))).length;
+    const already=X?days.filter(([d])=>{const s=X.stats[d];return s&&(Object.values(s.doc||{}).some(a=>sm(a))||sm(s.etc||[])||sm(s.drunk||[]))}).length:0;
+    return `<tr><td><input type="checkbox" data-sk="${k}" ${days.length?'checked':''}></td><td><b>${y}년 ${m}월</b></td><td>${days.length}일</td><td>${tot}</td><td>${dr}</td>
+      <td>${labels.map(esc).join(', ')||'-'}${labels.length>known?` <span class="muted">(새로 ${labels.length-known}명)</span>`:''}</td><td>${already?`<span class="warn">${already}일 → 파일 내용으로 바뀜</span>`:'-'}</td></tr>`}).join('')+'</table></div>';
+  h+=`<p class="muted" style="margin:8px 0 0">파일에 숫자가 없는 날은 지금 내용 그대로 둠. 의사는 통계 이름(er16 하)으로 연결, 명단에 없으면 새로 추가.</p>
+    <div class="row" style="margin-top:10px"><button class="btn pri" id="statApply">선택한 달 불러오기</button><button class="btn ghost" id="statCancel">취소</button></div>`;
+  $('#statPrev').innerHTML=h;
+  $('#statApply').onclick=()=>{
+    const sel=$$('#statPrev [data-sk]').filter(c=>c.checked).map(c=>c.dataset.sk);let nd=0;
+    sel.forEach(k=>{const X=ensureMonth(k);
+      Object.entries(statImp[k]).forEach(([d,v])=>{
+        if(!(Object.values(v.doc).some(a=>sm(a))||sm(v.etc)||sm(v.drunk)))return;
+        const st={doc:{},etc:v.etc,drunk:v.drunk,send:''};
+        Object.entries(v.doc).forEach(([lb,arr])=>{if(!sm(arr))return;const p=docForLabel(X,lb);st.doc[p.id]=addv(st.doc[p.id]||zero(),arr)});
+        X.stats[d]=st;nd++;
+      })});
+    statImp=null;save();renderAll();
+    $('#statPrev').innerHTML=`<p class="muted">✓ ${sel.length}개월 ${nd}일 통계를 불러옴. 합계 탭에서 확인.</p>`;
+  };
+  $('#statCancel').onclick=()=>{statImp=null;$('#statPrev').innerHTML=''};
+}
+$('#statFile').onchange=e=>{if(e.target.files.length)readStatFiles(e.target.files);e.target.value=''};
+(()=>{const dz=$('#statDrop');['dragover','dragenter'].forEach(t=>dz.addEventListener(t,e=>{e.preventDefault();dz.classList.add('over')}));
+  ['dragleave','drop'].forEach(t=>dz.addEventListener(t,e=>{e.preventDefault();dz.classList.remove('over')}));
+  dz.addEventListener('drop',e=>{if(e.dataTransfer.files.length)readStatFiles(e.dataTransfer.files)})})();
 
 /* ---------- 간호일지 ---------- */
 const dot=v=>num(v)?num(v):'·';
