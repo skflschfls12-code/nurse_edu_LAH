@@ -108,5 +108,10 @@
   "file": "registrations.html",
   "title": "진료 가능 등록 관리 방법",
   "group": "루틴"
+ },
+ {
+  "file": "er-nursing-log.html",
+  "title": "응급실 통계 · 간호일지 자동 작성",
+  "group": "통계 · 간호일지"
  }
 ]
