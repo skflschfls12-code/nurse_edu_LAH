@@ -141,24 +141,33 @@ table.st input::-webkit-outer-spin-button,table.st input::-webkit-inner-spin-but
 .daynav select{font-weight:700}
 .info{font-size:.82rem;color:var(--sub)}
 
-/* 간호일지 양식 */
+/* 간호일지 양식 — 원본 한글 파일(A4 가로)의 글꼴·크기·위치(mm) 그대로 */
 .sheetwrap{overflow-x:auto;background:#EDEFF2;border-radius:10px;padding:18px}
-.sheet{width:277mm;min-height:190mm;margin:0 auto;background:#fff;color:#000;padding:10mm 14mm;font-family:"Batang","바탕","Gulim","굴림",serif;box-shadow:0 1px 3px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.08);letter-spacing:0}
-.sheet h4{text-align:center;font-size:30pt;letter-spacing:.5em;margin:4mm 0 2mm;font-weight:800;padding-left:.5em}
-.sheet .dt{text-align:center;font-size:24pt;margin:0 0 8mm;font-family:"Gulim","굴림",sans-serif;letter-spacing:.02em}
-.sheet table{border-collapse:collapse}
-.sheet td{border:1.4pt solid #000;text-align:center;vertical-align:middle;font-size:13pt;padding:0 2mm}
-.sheet .t1{width:100%;margin-bottom:12mm}
-.sheet .t1 td{height:15mm;width:9.5%}
-.sheet .t1 td:first-child{width:7%}
-.sheet .bot{display:flex;justify-content:center;gap:8mm;align-items:flex-start}
-.sheet .t2 td{height:12mm;font-size:14pt}
-.sheet .t2 .k{width:24mm;font-size:16pt}
-.sheet .t2 .s{width:18mm;font-size:16pt}
-.sheet .t2 .v{width:72mm}
-.sheet .t3 td{height:11.5mm;width:17mm;font-size:13pt}
-.sheet .t3 .hd{font-size:14pt}
-.sheet .t3 td.v{width:22mm}
+.sheet{position:relative;width:297mm;height:210mm;margin:0 auto;background:#fff;color:#000;box-shadow:0 1px 3px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.08);
+  font-family:"함초롬바탕","HCR Batang","HCRBatang","한컴바탕","바탕",Batang,serif;letter-spacing:0;word-break:keep-all;-webkit-font-smoothing:auto}
+.sheet .ttl,.sheet .dt{position:absolute;left:0;right:0;text-align:center;font-weight:700;line-height:1;white-space:pre;margin:0}
+.sheet .ttl{top:20.2mm;font-size:45pt}
+.sheet .dt{top:45.6mm;font-size:40pt}
+.sheet table{position:absolute;border-collapse:collapse;table-layout:fixed}
+.sheet td{border:.5mm solid #000;text-align:center;vertical-align:middle;padding:.5mm 1.8mm;line-height:1.25;overflow:hidden}
+.sheet .t1{left:36.8mm;top:69.3mm;width:222.5mm}
+.sheet .t1 tr{height:17.5mm}
+.sheet .t1 td{font-size:18pt;font-weight:700}
+.sheet .t1 td.hd0{font-size:20pt}
+.sheet .t1 td.val{font-size:24pt}
+.sheet .t1 td.in{border-left-width:.12mm;border-right-width:.12mm}
+.sheet .t1 td.in.first{border-left-width:.5mm}.sheet .t1 td.in.last{border-right-width:.5mm}
+.sheet .t1 td.two{line-height:1.15}
+.sheet .t2{left:50.2mm;top:120.4mm;width:139.2mm}
+.sheet .t2 td.k,.sheet .t2 td.s{font-size:25pt;font-weight:700}
+.sheet .t2 td.v{font-size:20pt;white-space:nowrap}
+.sheet .t3{left:198.5mm;top:122.2mm;width:48mm}
+.sheet .t3 tr{height:13.5mm}
+.sheet .t3 td{font-size:18pt;font-weight:700}
+.sheet .t3 td.hd{font-size:20pt}
+.sheet .t3 td.v{font-size:25pt}
+.sheet .t3 tr.r td{border-top-width:.12mm;border-bottom-width:.12mm}
+.sheet .t3 tr.r1 td{border-top-width:.5mm}.sheet .t3 tr.r4 td{border-bottom-width:.5mm}
 #printArea{display:none}
 footer{max-width:1040px;margin:0 auto;padding:0 16px 40px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.8rem;color:var(--faint)}
 
@@ -167,7 +176,7 @@ footer{max-width:1040px;margin:0 auto;padding:0 16px 40px;display:flex;gap:8px;a
   body{background:#fff}
   .top,main,footer{display:none}
   #printArea{display:block}
-  .sheet{box-shadow:none;margin:0;width:297mm;height:209mm;padding:10mm 20mm;page-break-after:always;break-after:page;overflow:hidden}
+  .sheet{box-shadow:none;margin:0;width:297mm;height:209.5mm;page-break-after:always;break-after:page;overflow:hidden}
   .sheet:last-child{page-break-after:auto;break-after:auto}
 }
 </style></head><body>
@@ -904,28 +913,38 @@ function sheetHTML(d){
   const names=(arr,c)=>onDuty(arr,d,c).map(p=>esc(dName(p))).join(', ');
   const sN=M.nurses.filter(p=>{const v=getDuty(p.id,d);return v==='S'||(p.head&&v==='D')});
   const nurseD=[...sN.map(p=>esc(p.name)+'(S)'),...onDuty(M.nurses,d,'D').filter(p=>!sN.includes(p)).map(p=>esc(p.name))].join(', ');
+  const W1=[17.1,22.7,22.7,22.7,22.7,22.7,22.7,22.7,22.7,23.8];
+  const inn=i=>i===0?'':`in${i===1?' first':''}${i===9?' last':''}`;
+  const head=['(명)',...CATS,'총계','전송<br>건수'],vals=['일계',...T.t.map(dot),dot(T.sum),T.send===''?'':dot(T.send)];
   return `<div class="sheet">
-<h4>간호일지</h4>
-<div class="dt">${y}. ${m}. ${d} (${WD[wd(d)]})</div>
-<table class="t1"><tr><td>(명)</td>${CATS.map(c=>`<td>${c}</td>`).join('')}<td>총계</td><td>전송<br>건수</td></tr>
-<tr><td>일계</td>${T.t.map(v=>`<td>${dot(v)}</td>`).join('')}<td>${dot(T.sum)}</td><td>${T.send===''?'':dot(T.send)}</td></tr></table>
-<div class="bot">
-<table class="t2">
-<tr><td class="k" rowspan="3">Nr</td><td class="s">D</td><td class="v">${nurseD}</td></tr>
-<tr><td class="s">E</td><td class="v">${names(M.nurses,'E')}</td></tr>
-<tr><td class="s">N</td><td class="v">${names(M.nurses,'N')}</td></tr>
-<tr><td class="k" rowspan="2">Dr</td><td class="s">D</td><td class="v">${names(M.doctors,'D')}</td></tr>
-<tr><td class="s">N</td><td class="v">${names(M.doctors,'N')}</td></tr>
+<div class="ttl">간 호 일 지</div>
+<div class="dt"> ${y}. ${m}. ${d} (${WD[wd(d)]})</div>
+<table class="t1"><colgroup>${W1.map(w=>`<col style="width:${w}mm">`).join('')}</colgroup>
+<tr>${head.map((h,i)=>`<td class="${i===0?'hd0':inn(i)}${i===9?' two':''}">${h}</td>`).join('')}</tr>
+<tr>${vals.map((v,i)=>`<td class="${i===0?'':'val '+inn(i)}">${v}</td>`).join('')}</tr></table>
+<table class="t2"><colgroup><col style="width:30.3mm"><col style="width:22.3mm"><col style="width:86.6mm"></colgroup>
+<tr style="height:14.4mm"><td class="k" rowspan="3">Nr</td><td class="s">D</td><td class="v">${nurseD}</td></tr>
+<tr style="height:14.4mm"><td class="s">E</td><td class="v">${names(M.nurses,'E')}</td></tr>
+<tr style="height:14.4mm"><td class="s">N</td><td class="v">${names(M.nurses,'N')}</td></tr>
+<tr style="height:13.3mm"><td class="k" rowspan="2">Dr</td><td class="s">D</td><td class="v">${names(M.doctors,'D')}</td></tr>
+<tr style="height:12.7mm"><td class="s">N</td><td class="v">${names(M.doctors,'N')}</td></tr>
 </table>
-<table class="t3">
+<table class="t3"><colgroup><col style="width:20.3mm"><col style="width:27.7mm"></colgroup>
 <tr><td class="hd" colspan="2">주취자 현황</td></tr>
-<tr><td>총계</td><td class="v">${dot(sm(T.drunk))}</td></tr>
-${DCATS.map((c,i)=>`<tr><td>${c}</td><td class="v">${dot(T.drunk[i])}</td></tr>`).join('')}
-</table>
-</div></div>`;
+<tr class="r r1"><td>총계</td><td class="v">${dot(sm(T.drunk))}</td></tr>
+${DCATS.map((c,i)=>`<tr class="r r${i+2}"><td>${c}</td><td class="v">${dot(T.drunk[i])}</td></tr>`).join('')}
+</table></div>`;
 }
-function renderLog(){$('#logPrev').innerHTML=sheetHTML(day)}
-function doPrint(days){$('#printArea').innerHTML=days.map(sheetHTML).join('');window.print()}
+// 이름이 칸보다 길면 한 줄에 들어가게 글자를 줄임 (원본 20pt → 최소 11pt)
+function fitNames(root){
+  root.querySelectorAll('.sheet .t2 td.v').forEach(td=>{
+    td.style.fontSize='';let pt=20;
+    while(td.scrollWidth>td.clientWidth+1&&pt>11){pt-=.5;td.style.fontSize=pt+'pt'}
+    if(td.scrollWidth>td.clientWidth+1){td.style.whiteSpace='normal';td.style.lineHeight='1.1'}
+  });
+}
+function renderLog(){$('#logPrev').innerHTML=sheetHTML(day);fitNames($('#logPrev'))}
+function doPrint(days){const pa=$('#printArea');pa.innerHTML=days.map(sheetHTML).join('');pa.style.cssText='display:block;position:absolute;left:-9999px;top:0';fitNames(pa);pa.style.cssText='';window.print()}
 $('#printOne').onclick=()=>doPrint([day]);
 $('#printAll').onclick=()=>doPrint(Array.from({length:dim()},(_,i)=>i+1));
 
