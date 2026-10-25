@@ -96,10 +96,6 @@ td.c.mod::after{content:"";position:absolute;top:3px;right:3px;width:6px;height:
 .pop .opts button{width:38px;height:34px;border:1px solid var(--line);border-radius:7px;font-weight:700;cursor:pointer;background:#fff}
 .pop .opts button.cur{box-shadow:0 0 0 2px var(--acc)}
 .pop .opts button.clr{width:auto;padding:0 10px;font-weight:600;color:var(--sub)}
-.sw{display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;font-size:.88rem}
-.sw select{width:100%}
-.swv{display:flex;align-items:center;gap:8px;justify-content:center;padding:12px;background:#FAFBFC;border-radius:8px;margin:12px 0;font-size:.9rem;flex-wrap:wrap}
-.swv .k{display:inline-block;min-width:30px;text-align:center;border-radius:5px;font-weight:700;padding:1px 6px;background:var(--line2)}
 .chg{list-style:none;margin:0;padding:0;max-height:300px;overflow:auto}
 .chg li{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line2);font-size:.86rem}
 .chg li .k{display:inline-block;min-width:26px;text-align:center;border-radius:5px;font-weight:700;padding:0 5px;background:var(--line2);font-size:.8rem}
@@ -243,23 +239,10 @@ footer{max-width:1040px;margin:0 auto;padding:0 16px 40px;display:flex;gap:8px;a
     <div class="legend" style="margin-bottom:10px"><span class="k D">D</span><span class="k E">E</span><span class="k N">N</span><span class="k S">S</span>헤드널스 · 일지 D칸 맨 앞에 "이름(S)"<span class="k DN" style="margin-left:6px">DN</span>의사 24시간</div>
     <div class="scroll"><table class="g" id="dutyTbl"></table></div>
   </div>
-  <div class="cols">
-    <div class="card">
-      <h2>근무 바꾸기 (맞교대)</h2>
-      <p class="desc">같은 날 두 사람의 근무를 서로 맞바꿔요. 다른 날끼리 바꾼 경우는 날짜마다 한 번씩 하면 돼요.</p>
-      <div class="sw">
-        <span>날짜</span><select id="swD"></select>
-        <span>근무자 1</span><select id="swA"></select>
-        <span>근무자 2</span><select id="swB"></select>
-      </div>
-      <div class="swv" id="swView"></div>
-      <button class="btn pri" id="swBtn">서로 바꾸기</button>
-    </div>
-    <div class="card">
-      <h2>변경 내역 <span class="sp"></span><button class="btn sm ghost" id="chgClear">내역 지우기</button></h2>
-      <p class="desc">엑셀을 올린 뒤 직접 고친 근무가 남아요. 잘못 고쳤으면 되돌리기를 누르세요.</p>
-      <ul class="chg" id="chgList"></ul>
-    </div>
+  <div class="card">
+    <h2>변경 내역 <span class="sp"></span><button class="btn sm ghost" id="chgClear">내역 지우기</button></h2>
+    <p class="desc">근무표를 올린 뒤 직접 고친 근무가 남아요. 잘못 고쳤으면 되돌리기를 누르세요.</p>
+    <ul class="chg" id="chgList"></ul>
   </div>
   <div class="pop" id="pop"><div class="ttl" id="popTtl"></div><div class="opts" id="popOpts"></div></div>
 </section>
@@ -539,7 +522,7 @@ function renderDuty(){
   };
   $('#dutyTbl').innerHTML=h+rows(M.nurses,'n','간호사')+rows(M.doctors,'d','의사')+'</tbody>';
   if(selCell){const c=$(`#dutyTbl td.c[data-p="${selCell.p}"][data-d="${selCell.d}"]`);c&&c.classList.add('sel')}
-  renderSwap();renderChg();
+  renderChg();
 }
 function setDuty(p,d,v){(M.duty[p]=M.duty[p]||{});if(v)M.duty[p][d]=v;else delete M.duty[p][d]}
 const getDuty=(p,d)=>(M.duty[p]||{})[d]||'';
@@ -554,7 +537,7 @@ function editDuty(p,d,v,note){
   (M.chg=M.chg||[]).unshift({t:Date.now(),p,d:+d,from:cur,to:v,note:note||''});
 }
 function paintCell(td){const p=td.dataset.p,d=td.dataset.d,v=getDuty(p,d);td.className='c '+v+(isMod(p,d)?' mod':'')+(selCell&&selCell.p===p&&+selCell.d===+d?' sel':'');td.textContent=v}
-function afterEdit(){save();renderSwap();renderChg()}
+function afterEdit(){save();renderChg()}
 const pop=$('#pop');
 function closePop(){pop.style.display='none'}
 $('#dutyTbl').addEventListener('click',e=>{
@@ -579,37 +562,6 @@ pop.addEventListener('click',e=>{
 document.addEventListener('click',e=>{if(!pop.contains(e.target))closePop()});
 addEventListener('scroll',closePop,true);addEventListener('resize',closePop);
 
-/* 맞교대 */
-function renderSwap(){
-  const n=dim(),mm=+ym.split('-')[1];
-  const dSel=$('#swD'),a=$('#swA'),b=$('#swB');
-  const keep={d:dSel.value||day,a:a.value,b:b.value};
-  dSel.innerHTML=Array.from({length:n},(_,i)=>`<option value="${i+1}">${mm}월 ${i+1}일 (${WD[wd(i+1)]})</option>`).join('');
-  dSel.value=Math.min(+keep.d,n);
-  const d=+dSel.value;
-  const opt=p=>{const v=getDuty(p.id,d);return `<option value="${p.id}">${esc(p.name)}${v?' — '+v:''}</option>`};
-  const html=(M.nurses.length?`<optgroup label="간호사">${M.nurses.map(opt).join('')}</optgroup>`:'')+(M.doctors.length?`<optgroup label="의사">${M.doctors.map(opt).join('')}</optgroup>`:'');
-  a.innerHTML='<option value="">선택</option>'+html;b.innerHTML='<option value="">선택</option>'+html;
-  if(person(keep.a))a.value=keep.a;if(person(keep.b))b.value=keep.b;
-  const pa=person(a.value),pb=person(b.value);
-  const k=v=>`<span class="k ${v}">${v||'휴'}</span>`;
-  let msg='';
-  if(pa&&pb&&pa!==pb){
-    const va=getDuty(pa.id,d),vb=getDuty(pb.id,d);
-    msg=`<b>${esc(pa.name)}</b> ${k(va)} <span>⇄</span> ${k(vb)} <b>${esc(pb.name)}</b>`;
-    if(kindOf(pa.id)!==kindOf(pb.id))msg+=`<span class="warn" style="width:100%;text-align:center;font-size:.8rem">간호사와 의사는 바꿀 수 없어요</span>`;
-    else if(va===vb)msg+=`<span class="muted" style="width:100%;text-align:center">두 사람 근무가 같아요</span>`;
-  }else msg='<span class="muted">날짜와 두 사람을 고르세요</span>';
-  $('#swView').innerHTML=msg;
-  $('#swBtn').disabled=!(pa&&pb&&pa!==pb&&kindOf(pa.id)===kindOf(pb.id)&&getDuty(pa.id,d)!==getDuty(pb.id,d));
-}
-['#swD','#swA','#swB'].forEach(s=>$(s).addEventListener('change',renderSwap));
-$('#swBtn').onclick=()=>{
-  const d=+$('#swD').value,a=$('#swA').value,b=$('#swB').value;const va=getDuty(a,d),vb=getDuty(b,d);
-  const na=person(a).name,nb=person(b).name;
-  editDuty(a,d,vb,`${nb}와 맞교대`);editDuty(b,d,va,`${na}와 맞교대`);
-  save();renderDuty();
-};
 
 /* 변경 내역 */
 function renderChg(){
