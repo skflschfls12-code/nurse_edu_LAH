@@ -3,65 +3,127 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css");
+:root{
+  --bg:#F4F5F7;--card:#fff;--line:#E3E6EB;--line2:#EFF1F4;--tx:#1D2433;--sub:#6B7280;--faint:#9AA1AD;
+  --acc:#2F5D8A;--acc2:#244A6E;--accs:#EAF1F8;
+  --sD:#FFF3C7;--tD:#7A5A00;--sE:#E1EDFF;--tE:#1D4F91;--sN:#ECE6FA;--tN:#57399A;--sS:#DCF2E3;--tS:#1E6B3A;--sDN:#FBE4E4;--tDN:#9B2C2C;
+}
 *{box-sizing:border-box}
-body{margin:0;background:#F6F4EF;color:#20242B;font-family:Pretendard,sans-serif;font-size:15px;line-height:1.6;letter-spacing:-.015em;word-break:keep-all}
-main{max-width:980px;margin:0 auto;padding:18px 14px 80px}
-h1{font-size:1.35rem;font-weight:800;letter-spacing:-.035em;margin:0 0 14px;padding:16px;line-height:1.35;text-align:center;background:#fff;border:2px solid #20242B;border-radius:14px;box-shadow:4px 4px 0 #20242B}
-h2{font-size:.9rem;font-weight:800;margin:4px 0 10px;background:#20242B;color:#fff;display:inline-block;padding:4px 12px;border-radius:20px}
-.card{background:#fff;border:2px solid #20242B;border-radius:14px;padding:14px;margin-bottom:14px;box-shadow:3px 3px 0 rgba(32,36,43,.18)}
-.note{background:#FFF9E3;border:1.5px solid #E8D98A;border-radius:10px;padding:10px 12px;margin:10px 0 0;font-size:.88rem;line-height:1.6}
-.muted{color:#6E6A61;font-size:.85rem}
-button,select,input,textarea{font:inherit;color:inherit}
-button{border:2px solid #20242B;background:#fff;border-radius:10px;padding:7px 12px;font-weight:700;cursor:pointer}
-button.pri{background:#20242B;color:#fff}
-button.sm{padding:3px 8px;font-size:.82rem;border-width:1.5px;border-radius:8px}
-button:disabled{opacity:.4;cursor:default}
-input[type=text],input[type=number],select,textarea{border:1.5px solid #C9C4B8;border-radius:8px;padding:6px 8px;background:#fff}
-textarea{width:100%;min-height:90px;resize:vertical;font-size:.85rem}
-.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;position:sticky;top:0;z-index:5;background:#F6F4EF;padding:6px 0}
-.tabs button{flex:1;min-width:84px}
-.tabs button.on{background:#20242B;color:#fff}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:Pretendard,-apple-system,"Malgun Gothic",sans-serif;font-size:15px;line-height:1.55;letter-spacing:-.01em;word-break:keep-all;-webkit-font-smoothing:antialiased}
+button,select,input,textarea{font:inherit;color:inherit;letter-spacing:inherit}
+
+/* 상단 */
+.top{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.top .in{max-width:1040px;margin:0 auto;padding:12px 16px 0}
+.bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.bar h1{font-size:1.12rem;font-weight:700;margin:0;flex:1;min-width:180px;letter-spacing:-.02em}
+.bar h1 small{display:block;font-size:.76rem;font-weight:500;color:var(--sub)}
+.mon{display:flex;align-items:center;gap:4px}
+.mon select{border:1px solid var(--line);border-radius:8px;padding:6px 8px;background:#fff;font-weight:600}
+.saved{font-size:.75rem;color:var(--faint);min-width:64px;text-align:right}
+nav.tabs{display:flex;gap:2px;overflow-x:auto;margin-top:10px;scrollbar-width:none}
+nav.tabs::-webkit-scrollbar{display:none}
+nav.tabs button{border:0;background:none;padding:10px 14px;font-weight:600;color:var(--sub);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap}
+nav.tabs button:hover{color:var(--tx)}
+nav.tabs button.on{color:var(--acc);border-bottom-color:var(--acc)}
+
+main{max-width:1040px;margin:0 auto;padding:18px 16px 60px}
 .pane{display:none}.pane.on{display:block}
-.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
-table.g{border-collapse:collapse;font-size:.85rem}
-table.g th,table.g td{border:1px solid #D6D1C5;padding:0;text-align:center;white-space:nowrap}
-table.g th{background:#F1EEE6;font-weight:700;padding:3px 5px}
-table.g td.nm{position:sticky;left:0;background:#fff;text-align:left;padding:3px 8px;font-weight:700;z-index:1}
-table.g th.nm{position:sticky;left:0;z-index:2}
-table.g th.we{color:#C0392B}
-table.g td.c{width:30px;min-width:30px;height:30px;cursor:pointer;user-select:none;font-weight:800}
-td.c.D{background:#FFF3C4}td.c.E{background:#D9ECFF}td.c.N{background:#E3DAF7}td.c.DN{background:#F7D9D9}td.c.S{background:#D6F0DC}
-td.c.sel{outline:2px solid #20242B;outline-offset:-2px}
-.legend span{display:inline-block;padding:1px 8px;border-radius:6px;margin-right:4px;font-weight:800;font-size:.8rem}
-.list .it{display:flex;gap:6px;align-items:center;margin-bottom:6px}
-.list .it input{flex:1;min-width:0}
-.list .it input.code{flex:0 0 76px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:14px}
+.card>h2{font-size:1rem;font-weight:700;margin:0 0 2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.desc{color:var(--sub);font-size:.85rem;margin:0 0 14px}
+h3{font-size:.9rem;font-weight:700;margin:22px 0 8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+h3:first-of-type{margin-top:6px}
+.muted{color:var(--sub);font-size:.84rem}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.sp{flex:1}
 .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media (max-width:700px){.cols{grid-template-columns:1fr}}
-table.st{border-collapse:collapse;width:100%;font-size:.9rem}
-table.st th,table.st td{border:1px solid #D6D1C5;padding:3px;text-align:center}
-table.st th{background:#F1EEE6}
-table.st td.lb{text-align:left;padding:3px 8px;font-weight:700;white-space:nowrap}
-table.st tr.off td.lb{color:#A8A396;font-weight:500}
-table.st tr.sum td{background:#F1EEE6;font-weight:800}
-table.st input{width:100%;min-width:38px;text-align:center;border:0;padding:6px 2px;background:transparent;-moz-appearance:textfield}
-table.st input:focus{background:#FFF3C4;outline:none}
+@media (max-width:760px){.cols{grid-template-columns:1fr}}
+
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 13px;font-weight:600;cursor:pointer;font-size:.88rem;white-space:nowrap}
+.btn:hover{background:#F7F8FA}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.pri:hover{background:var(--acc2)}
+.btn.sm{padding:4px 9px;font-size:.8rem}
+.btn.ghost{border-color:transparent;color:var(--sub)}
+.btn.ghost:hover{color:var(--tx);background:var(--line2)}
+.btn:disabled{opacity:.4;cursor:default}
+.icon{width:30px;height:30px;padding:0;display:inline-grid;place-items:center}
+input[type=text],input[type=number],select,textarea{border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:#fff;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--accs)}
+textarea{width:100%;min-height:90px;resize:vertical;font-size:.85rem}
+.note{background:#F7F8FA;border-radius:8px;padding:10px 12px;font-size:.82rem;color:var(--sub);margin-top:12px}
+.seg{display:inline-flex;background:var(--line2);border-radius:9px;padding:3px;gap:2px}
+.seg button{border:0;background:none;border-radius:7px;padding:5px 14px;font-weight:600;color:var(--sub);cursor:pointer;font-size:.88rem}
+.seg button.on{background:#fff;color:var(--tx);box-shadow:0 1px 2px rgba(16,24,40,.12)}
+.chip{border:1px solid var(--line);background:#fff;border-radius:99px;padding:5px 13px;font-weight:600;font-size:.85rem;cursor:pointer;color:var(--sub)}
+.chip.on{background:var(--accs);border-color:var(--acc);color:var(--acc)}
+details{border-top:1px solid var(--line2);margin-top:14px;padding-top:12px}
+summary{cursor:pointer;font-weight:600;font-size:.88rem;color:var(--sub)}
+details[open] summary{margin-bottom:8px}
+
+/* 명단 */
+.list{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+.list .it{display:flex;gap:6px;align-items:center}
+.list .it .no{width:22px;color:var(--faint);font-size:.8rem;text-align:right;flex:none}
+.list .it input{flex:1;min-width:0}
+.list .it input.code{flex:0 0 80px}
+.empty{color:var(--faint);font-size:.85rem;padding:10px 0}
+
+/* 근무표 */
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+table.g{border-collapse:separate;border-spacing:0;font-size:.82rem}
+table.g th,table.g td{border-bottom:1px solid var(--line2);border-right:1px solid var(--line2);text-align:center;white-space:nowrap;padding:0}
+table.g thead th{background:#FAFBFC;font-weight:600;color:var(--sub);padding:4px 0;line-height:1.25;font-size:.78rem;position:sticky;top:0}
+table.g thead th b{display:block;color:var(--tx);font-size:.85rem}
+table.g th.we b,table.g th.we{color:#C2410C}
+table.g .nm{position:sticky;left:0;background:#fff;text-align:left;padding:0 12px 0 8px;font-weight:600;z-index:1;min-width:96px}
+table.g thead .nm{z-index:3;background:#FAFBFC}
+table.g tr.grp td{background:#FAFBFC;font-weight:700;color:var(--sub);font-size:.78rem;text-align:left;padding:5px 8px}
+table.g td.c{width:30px;min-width:30px;height:30px;cursor:pointer;user-select:none;font-weight:700;font-size:.8rem}
+table.g td.c:hover{background:var(--line2)}
+.D{background:var(--sD)!important;color:var(--tD)}.E{background:var(--sE)!important;color:var(--tE)}.N{background:var(--sN)!important;color:var(--tN)}
+.S{background:var(--sS)!important;color:var(--tS)}.DN{background:var(--sDN)!important;color:var(--tDN)}
+td.c.sel{box-shadow:inset 0 0 0 2px var(--acc)}
+.legend{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:.8rem;color:var(--sub)}
+.legend span.k{display:inline-block;min-width:28px;text-align:center;border-radius:5px;font-weight:700;padding:1px 6px}
+
+.drop{display:block;border:1.5px dashed #C9CFD8;border-radius:10px;padding:22px;text-align:center;cursor:pointer;background:#FAFBFC;transition:.15s}
+.drop:hover,.drop.over{border-color:var(--acc);background:var(--accs)}
+.drop b{display:block;font-size:.95rem;margin-bottom:2px}
+.drop span{display:block}
+.prev{margin-top:12px}
+table.pv{border-collapse:collapse;font-size:.82rem;width:100%}
+table.pv th,table.pv td{border-bottom:1px solid var(--line2);padding:5px 8px;text-align:left;white-space:nowrap}
+table.pv th{color:var(--sub);font-weight:600;background:#FAFBFC}
+table.pv .codes{font-family:ui-monospace,Menlo,monospace;font-size:.75rem;color:var(--sub);white-space:nowrap;max-width:420px;overflow:hidden;text-overflow:ellipsis}
+table.pv select{padding:3px 6px;font-size:.8rem}
+.warn{color:#B42318}
+
+/* 숫자표 */
+table.st{border-collapse:collapse;width:100%;font-size:.88rem;font-variant-numeric:tabular-nums}
+table.st th,table.st td{border-bottom:1px solid var(--line2);padding:7px 6px;text-align:center}
+table.st thead th,table.st tr.h th{color:var(--sub);font-weight:600;font-size:.8rem;background:#FAFBFC;border-bottom:1px solid var(--line)}
+table.st td.lb{text-align:left;padding-left:10px;font-weight:600;white-space:nowrap}
+table.st tr.off td.lb{color:var(--faint);font-weight:500}
+table.st tr.sum td{background:#F5F7FA;font-weight:700;border-top:1px solid var(--line)}
+table.st tr.sub td{background:#FAFBFC;font-weight:700;color:var(--acc)}
+table.st td.tot,table.st th.tot{font-weight:700;background:#FAFBFC;min-width:52px}
+table.st td.z{color:#C4C9D1}
+table.st td.inp{padding:3px}
+table.st input{width:100%;min-width:40px;text-align:center;border:1px solid transparent;border-radius:6px;padding:6px 2px;background:transparent;-moz-appearance:textfield}
+table.st input:hover{background:#F7F8FA}
+table.st input:focus{border-color:var(--acc);background:#fff;box-shadow:0 0 0 3px var(--accs)}
 table.st input::-webkit-outer-spin-button,table.st input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-.seg{display:inline-flex;border:2px solid #20242B;border-radius:10px;overflow:hidden}
-.seg button{border:0;border-radius:0;padding:6px 14px}
-.seg button+button{border-left:2px solid #20242B}
-.seg button.on{background:#20242B;color:#fff}
-h3.sub{font-size:.95rem;margin:16px 0 6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-table.st td.nodata{color:#A8A396}
-.badge{display:inline-block;font-size:.72rem;background:#20242B;color:#fff;border-radius:6px;padding:0 5px;margin-left:4px;vertical-align:1px}
-.daynav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.daynav select{font-weight:800}
+.badge{display:inline-block;font-size:.68rem;background:var(--accs);color:var(--acc);border-radius:5px;padding:0 5px;margin-left:5px;font-weight:700;vertical-align:1px}
+.daynav{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.daynav select{font-weight:700}
+.info{font-size:.82rem;color:var(--sub)}
 
 /* 간호일지 양식 */
-.sheetwrap{overflow-x:auto;background:#E9E5DB;border-radius:12px;padding:14px}
-.sheet{width:277mm;min-height:190mm;margin:0 auto;background:#fff;color:#000;padding:10mm 14mm;font-family:"Batang","바탕","Gulim","굴림",serif;box-shadow:0 2px 10px rgba(0,0,0,.15)}
-.sheet h3{text-align:center;font-size:30pt;letter-spacing:.5em;margin:4mm 0 2mm;font-weight:800;padding-left:.5em}
+.sheetwrap{overflow-x:auto;background:#EDEFF2;border-radius:10px;padding:18px}
+.sheet{width:277mm;min-height:190mm;margin:0 auto;background:#fff;color:#000;padding:10mm 14mm;font-family:"Batang","바탕","Gulim","굴림",serif;box-shadow:0 1px 3px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.08);letter-spacing:0}
+.sheet h4{text-align:center;font-size:30pt;letter-spacing:.5em;margin:4mm 0 2mm;font-weight:800;padding-left:.5em}
 .sheet .dt{text-align:center;font-size:24pt;margin:0 0 8mm;font-family:"Gulim","굴림",sans-serif;letter-spacing:.02em}
 .sheet table{border-collapse:collapse}
 .sheet td{border:1.4pt solid #000;text-align:center;vertical-align:middle;font-size:13pt;padding:0 2mm}
@@ -77,146 +139,159 @@ table.st td.nodata{color:#A8A396}
 .sheet .t3 .hd{font-size:14pt}
 .sheet .t3 td.v{width:22mm}
 #printArea{display:none}
+footer{max-width:1040px;margin:0 auto;padding:0 16px 40px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.8rem;color:var(--faint)}
 
 @media print{
   @page{size:A4 landscape;margin:0}
   body{background:#fff}
-  main{display:none}
+  .top,main,footer{display:none}
   #printArea{display:block}
   .sheet{box-shadow:none;margin:0;width:297mm;height:209mm;padding:10mm 20mm;page-break-after:always;break-after:page;overflow:hidden}
   .sheet:last-child{page-break-after:auto;break-after:auto}
 }
-</style></head><body><main>
-<h1>응급실 통계 · 간호일지</h1>
+</style></head><body>
 
-<div class="card">
-  <div class="row">
-    <b>근무 월</b>
-    <select id="ySel"></select><select id="mSel"></select>
-    <span class="muted" id="saved"></span>
+<header class="top"><div class="in">
+  <div class="bar">
+    <h1>응급실 통계 · 간호일지<small>명단과 근무표, 하루 숫자만 넣으면 일지가 만들어져요</small></h1>
+    <div class="mon">
+      <button class="btn icon ghost" id="mPrev" title="이전 달">‹</button>
+      <select id="ySel"></select><select id="mSel"></select>
+      <button class="btn icon ghost" id="mNext" title="다음 달">›</button>
+    </div>
+    <span class="saved" id="saved"></span>
   </div>
-  <div class="note">입력한 내용은 <b>이 컴퓨터(브라우저)에만</b> 자동 저장돼요. 다른 컴퓨터로 옮길 때는 맨 아래 <b>백업 파일 저장 / 불러오기</b>를 쓰세요. 환자 개인정보는 입력하지 않아요(숫자만).</div>
-</div>
+  <nav class="tabs" id="tabs">
+    <button data-t="staff">근무자 명단</button>
+    <button data-t="duty">근무표</button>
+    <button data-t="stat">일일 통계</button>
+    <button data-t="log">간호일지</button>
+    <button data-t="sum">합계</button>
+  </nav>
+</div></header>
 
-<div class="tabs" id="tabs">
-  <button data-t="staff">① 근무자 명단</button>
-  <button data-t="duty">② 근무표</button>
-  <button data-t="stat">③ 일일 통계</button>
-  <button data-t="log">④ 간호일지</button>
-  <button data-t="sum">⑤ 합계(월·분기)</button>
-</div>
-
-<!-- ① 명단 -->
+<main>
+<!-- 명단 -->
 <section class="pane" id="p-staff">
   <div class="cols">
     <div class="card">
       <h2>간호사</h2>
+      <p class="desc">일지에 나오는 순서대로 정리해 두세요.</p>
       <div class="list" id="nurseList"></div>
-      <div class="row"><button class="sm" id="addNurse">+ 간호사 추가</button></div>
+      <button class="btn sm" id="addNurse">+ 간호사 추가</button>
     </div>
     <div class="card">
       <h2>의사</h2>
-      <p class="muted" style="margin:0 0 8px">코드(er16 등)와 이름. 통계표에는 "코드 성"으로, 일지에는 이름으로 나와요.</p>
+      <p class="desc">코드(er16)와 이름. 통계에는 "er16 하", 일지에는 이름으로 나와요.</p>
       <div class="list" id="docList"></div>
-      <div class="row"><button class="sm" id="addDoc">+ 의사 추가</button></div>
+      <button class="btn sm" id="addDoc">+ 의사 추가</button>
     </div>
   </div>
   <div class="card">
-    <h2>한 번에 붙여넣기</h2>
-    <p class="muted" style="margin:0 0 6px">이름을 한 줄에 하나씩(또는 쉼표로) 붙여넣으면 명단에 추가돼요. 의사는 <code>er16 하길동</code>처럼 코드와 이름을 띄어 쓰세요.</p>
+    <h2>여러 명 한 번에 추가</h2>
+    <p class="desc">한 줄에 한 명씩 붙여넣으세요. 의사는 <code>er16 하길동</code>처럼 코드와 이름을 띄어 쓰면 돼요. 엑셀 근무표를 올리면 명단도 같이 채워져요.</p>
     <textarea id="bulkNames" placeholder="홍길동&#10;김간호&#10;이간호"></textarea>
-    <div class="row" style="margin-top:6px"><button class="sm" id="bulkNurse">간호사로 추가</button><button class="sm" id="bulkDoc">의사로 추가</button></div>
+    <div class="row" style="margin-top:8px"><button class="btn sm" id="bulkNurse">간호사로 추가</button><button class="btn sm" id="bulkDoc">의사로 추가</button></div>
   </div>
 </section>
 
-<!-- ② 근무표 -->
+<!-- 근무표 -->
 <section class="pane" id="p-duty">
   <div class="card">
-    <h2>근무표</h2>
-    <p class="muted" style="margin:0 0 6px">칸을 누를 때마다 바뀌어요. 간호사: 빈칸 → D → E → N → S(헤드널스), 의사: 빈칸 → D → N → DN(24시간). 칸을 누른 뒤 키보드 <b>D·E·N·S</b> 입력, <b>Delete</b>로 지우기, 방향키로 이동도 돼요.</p>
-    <div class="legend muted" style="margin-bottom:8px"><span style="background:#FFF3C4">D</span><span style="background:#D9ECFF">E</span><span style="background:#E3DAF7">N</span><span style="background:#F7D9D9">DN</span><span style="background:#D6F0DC">S</span> <span>S = 헤드널스 → 일지 D칸 맨 앞에 "이름(S)"로 들어가요</span></div>
+    <h2>엑셀 근무표 올리기</h2>
+    <p class="desc">쓰던 근무표 엑셀 파일(.xlsx, .xls)을 그대로 올리세요. 날짜(1, 2, 3…) 줄과 이름 칸을 자동으로 찾아요.</p>
+    <label class="drop" id="drop"><input type="file" id="dutyFile" accept=".xlsx,.xls,.xlsm,.csv" hidden>
+      <b>파일을 끌어다 놓거나 눌러서 선택</b><span class="muted">D · E · N · S · DN 외의 글자(Off, 휴 등)는 빈칸으로 처리돼요</span></label>
+    <div class="prev" id="dutyPrev"></div>
+    <details>
+      <summary>엑셀에서 복사해 붙여넣기</summary>
+      <p class="muted" style="margin:0 0 6px">이름 칸부터 마지막 날짜 칸까지 행을 복사해 붙여넣으세요. 한 행 = 이름, 1일, 2일, … 순서.</p>
+      <textarea id="dutyPaste" placeholder="홍길동&#9;D&#9;D&#9;E&#9;N&#9;Off ..."></textarea>
+      <div class="row" style="margin-top:8px">
+        <select id="pasteKind"><option value="n">간호사 근무표</option><option value="d">의사 근무표</option></select>
+        <button class="btn sm pri" id="dutyPasteBtn">적용</button>
+      </div>
+    </details>
+  </div>
+  <div class="card">
+    <h2>이번 달 근무표 <span class="sp"></span><button class="btn sm ghost" id="dutyClear">전체 지우기</button></h2>
+    <p class="desc">칸을 누르면 바뀌어요. 간호사 빈칸 → D → E → N → S, 의사 빈칸 → D → N → DN. 칸을 고른 뒤 키보드 D·E·N·S, Delete, 방향키도 돼요.</p>
+    <div class="legend" style="margin-bottom:10px"><span class="k D">D</span><span class="k E">E</span><span class="k N">N</span><span class="k S">S</span>헤드널스 · 일지 D칸 맨 앞에 "이름(S)"<span class="k DN" style="margin-left:6px">DN</span>의사 24시간</div>
     <div class="scroll"><table class="g" id="dutyTbl"></table></div>
   </div>
-  <div class="card">
-    <h2>엑셀 근무표 붙여넣기</h2>
-    <p class="muted" style="margin:0 0 6px">엑셀 근무표에서 <b>이름 칸부터 마지막 날짜 칸까지</b> 행을 복사해 붙여넣으세요. 한 행 = <code>이름, 1일, 2일, …</code> 순서. D/E/N/S 외의 글자(Off, 휴 등)는 빈칸으로 처리돼요. 명단에 없는 이름은 아래 선택한 직종으로 추가돼요.</p>
-    <textarea id="dutyPaste" placeholder="홍길동&#9;D&#9;D&#9;E&#9;N&#9;Off ..."></textarea>
-    <div class="row" style="margin-top:6px">
-      <select id="pasteKind"><option value="n">간호사 근무표</option><option value="d">의사 근무표</option></select>
-      <button class="sm pri" id="dutyPasteBtn">적용</button>
-      <button class="sm" id="dutyClear">이번 달 근무표 전체 지우기</button>
-    </div>
-  </div>
 </section>
 
-<!-- ③ 통계 -->
+<!-- 통계 -->
 <section class="pane" id="p-stat">
   <div class="card">
-    <div class="daynav" style="margin-bottom:10px">
-      <button class="sm" data-dd="-1">◀</button><select class="daySel"></select><button class="sm" data-dd="1">▶</button>
-      <span class="muted dayInfo"></span>
+    <div class="daynav">
+      <button class="btn icon" data-dd="-1">‹</button><select class="daySel"></select><button class="btn icon" data-dd="1">›</button>
+      <span class="info dayInfo"></span>
     </div>
     <div class="scroll"><table class="st" id="statTbl"></table></div>
-    <div class="cols" style="margin-top:14px">
-      <div>
-        <h2>주취자</h2>
-        <table class="st" id="drunkTbl"></table>
-      </div>
-      <div>
-        <h2>전송 건수</h2>
-        <table class="st"><tr><th>전송 건수</th></tr><tr><td><input type="number" min="0" inputmode="numeric" id="sendIn"></td></tr></table>
-      </div>
+    <div class="cols" style="margin-top:18px">
+      <div><h3>주취자</h3><table class="st" id="drunkTbl"></table></div>
+      <div><h3>전송 건수</h3><table class="st"><tr class="h"><th>전송 건수</th></tr><tr><td class="inp"><input type="number" min="0" inputmode="numeric" id="sendIn"></td></tr></table></div>
     </div>
-    <p class="muted" style="margin:10px 0 0">근무표상 그날 근무한 의사는 <span class="badge">근무</span> 표시가 돼요. 숫자 칸에서 Enter를 누르면 다음 칸으로 가요.</p>
+    <p class="note">근무표상 그날 근무한 의사에게 <span class="badge">근무</span>가 붙어요. Enter를 누르면 다음 칸으로 넘어가요.</p>
   </div>
 </section>
 
-<!-- ④ 일지 -->
+<!-- 일지 -->
 <section class="pane" id="p-log">
   <div class="card">
-    <div class="daynav" style="margin-bottom:10px">
-      <button class="sm" data-dd="-1">◀</button><select class="daySel"></select><button class="sm" data-dd="1">▶</button>
-      <button class="pri" id="printOne">이 날짜 인쇄</button>
-      <button id="printAll">이번 달 전체 인쇄</button>
+    <div class="daynav">
+      <button class="btn icon" data-dd="-1">‹</button><select class="daySel"></select><button class="btn icon" data-dd="1">›</button>
+      <span class="sp"></span>
+      <button class="btn" id="printAll">이번 달 전체 인쇄</button>
+      <button class="btn pri" id="printOne">이 날짜 인쇄</button>
     </div>
-    <p class="muted" style="margin:0 0 10px">숫자 0은 기존 양식처럼 "·"로 나와요. 인쇄 창에서 용지는 A4 가로, 여백 없음(또는 기본)으로 맞추세요.</p>
     <div class="sheetwrap" id="logPrev"></div>
+    <p class="note">숫자 0은 기존 양식처럼 "·"로 나와요. 인쇄할 때 용지는 A4 가로로 맞추세요.</p>
   </div>
 </section>
 
-<!-- ⑤ 월 합계 -->
+<!-- 합계 -->
 <section class="pane" id="p-sum">
   <div class="card">
-    <div class="row" style="margin-bottom:12px">
-      <div class="seg" id="sumMode"><button data-m="m">월별</button><button data-m="q">분기별</button><button data-m="y">연간</button></div>
-      <select id="qSel"><option value="1">1분기 (1~3월)</option><option value="2">2분기 (4~6월)</option><option value="3">3분기 (7~9월)</option><option value="4">4분기 (10~12월)</option></select>
-      <span class="muted" id="sumHint"></span>
+    <div class="row" style="margin-bottom:6px">
+      <div class="seg" id="sumMode"><button data-m="m">월별</button><button data-m="q">분기별</button></div>
+      <div class="row" id="qPick">
+        <button class="chip" data-q="1">1분기</button><button class="chip" data-q="2">2분기</button><button class="chip" data-q="3">3분기</button><button class="chip" data-q="4">4분기</button>
+        <button class="btn sm ghost" id="qAll">전체 선택</button>
+      </div>
+      <span class="sp"></span>
+      <button class="btn pri" id="xlsBtn">엑셀로 내려받기</button>
     </div>
-    <h2 id="sumTitle">월 합계</h2>
-    <h3 class="sub">의사별 합계</h3>
+    <p class="muted" id="sumHint" style="margin:6px 0 0"></p>
+  </div>
+
+  <div class="card">
+    <h2 id="sumTitle"></h2>
+    <div id="qBlock">
+      <h3>분기별 합계</h3>
+      <div class="scroll"><table class="st" id="qTbl"></table></div>
+    </div>
+    <h3>의사별 합계</h3>
     <div class="scroll"><table class="st" id="sumTbl"></table></div>
     <div id="perMonth">
-      <h3 class="sub">월별 합계</h3>
-      <div class="scroll"><table class="st" id="sumMonthTbl"></table></div>
-      <h3 class="sub">의사별 · 월별 비교 <select id="cmpCat"></select></h3>
+      <h3>의사별 · 월별 비교 <select id="cmpCat"></select></h3>
       <div class="scroll"><table class="st" id="cmpTbl"></table></div>
+      <h3>월별 합계</h3>
+      <div class="scroll"><table class="st" id="sumMonthTbl"></table></div>
     </div>
-    <h3 class="sub">주취자 · 전송</h3>
+    <h3>주취자 · 전송</h3>
     <div class="scroll"><table class="st" id="sumDrunk"></table></div>
-    <div class="row" style="margin-top:14px"><button class="pri" id="xlsBtn">엑셀로 내려받기</button></div>
-    <p class="muted" style="margin:6px 0 0" id="xlsHint"></p>
   </div>
 </section>
-
-<div class="card">
-  <h2>백업</h2>
-  <div class="row">
-    <button class="sm" id="bkSave">백업 파일 저장</button>
-    <label class="sm" style="display:inline-block"><input type="file" id="bkLoad" accept=".json,application/json" hidden><button class="sm" type="button" onclick="this.previousElementSibling.click()">백업 파일 불러오기</button></label>
-  </div>
-  <p class="muted" style="margin:6px 0 0">백업 파일에는 모든 달의 명단·근무표·통계가 들어 있어요.</p>
-</div>
 </main>
+
+<footer>
+  <span>입력한 내용은 이 브라우저에만 저장돼요. 다른 컴퓨터로 옮길 땐 백업 파일을 쓰세요. 환자 개인정보는 넣지 않아요.</span>
+  <span class="sp"></span>
+  <button class="btn sm" id="bkSave">백업 파일 저장</button>
+  <button class="btn sm" id="bkLoadBtn">백업 불러오기</button><input type="file" id="bkLoad" accept=".json,application/json" hidden>
+</footer>
 <div id="printArea"></div>
 
 <script>
@@ -228,6 +303,8 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 const uid=()=>Math.random().toString(36).slice(2,9);
 const num=v=>{const n=parseInt(v,10);return isNaN(n)?0:n};
+const sm=a=>a.reduce((x,v)=>x+num(v),0);
+const pad=n=>String(n).padStart(2,'0');
 
 let DB={months:{},last:null};
 try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.months)DB=s}catch(e){}
@@ -236,52 +313,57 @@ let ym, M, day=1, tab='staff';
 function save(){
   DB.last=ym;
   try{localStorage.setItem(KEY,JSON.stringify(DB));$('#saved').textContent='저장됨 '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}
-  catch(e){$('#saved').textContent='저장 실패 — 백업 파일로 저장해 두세요'}
+  catch(e){$('#saved').textContent='저장 실패'}
 }
-const dim=()=>{const[y,m]=ym.split('-').map(Number);return new Date(y,m,0).getDate()};
+const dimOf=k=>{const[y,m]=k.split('-').map(Number);return new Date(y,m,0).getDate()};
+const dim=()=>dimOf(ym);
 const wd=d=>{const[y,m]=ym.split('-').map(Number);return new Date(y,m-1,d).getDay()};
 
 function openMonth(k){
   ym=k;
   if(!DB.months[k]){
-    // 새 달: 가장 최근 달의 명단을 이어받음
+    // 새 달: 가장 가까운 이전 달 명단을 이어받음
     const prev=Object.keys(DB.months).filter(x=>x<k).sort().pop()||Object.keys(DB.months).sort().pop();
     const p=prev&&DB.months[prev];
     DB.months[k]={nurses:p?p.nurses.map(x=>({...x})):[],doctors:p?p.doctors.map(x=>({...x})):[],duty:{},stats:{}};
   }
   M=DB.months[k];
   if(day>dim())day=dim();
+  const[y,m]=k.split('-');
+  if(![...$('#ySel').options].some(o=>o.value===y))$('#ySel').insertAdjacentHTML('beforeend',`<option value="${y}">${y}년</option>`);
+  $('#ySel').value=y;$('#mSel').value=m;
   save();renderAll();
 }
+function shiftMonth(n){const[y,m]=ym.split('-').map(Number);const d=new Date(y,m-1+n,1);day=1;openMonth(`${d.getFullYear()}-${pad(d.getMonth()+1)}`)}
 
 /* ---------- 명단 ---------- */
 function renderStaff(){
-  $('#nurseList').innerHTML=M.nurses.map((n,i)=>`<div class="it" data-k="nurses" data-i="${i}">
-    <input type="text" value="${esc(n.name)}" data-f="name" placeholder="이름">
-    <button class="sm" data-mv="-1" title="위로">↑</button><button class="sm" data-mv="1" title="아래로">↓</button><button class="sm" data-del>삭제</button></div>`).join('')||'<p class="muted">아직 없어요.</p>';
-  $('#docList').innerHTML=M.doctors.map((n,i)=>`<div class="it" data-k="doctors" data-i="${i}">
+  const ctl=`<button class="btn sm ghost icon" data-mv="-1" title="위로">↑</button><button class="btn sm ghost icon" data-mv="1" title="아래로">↓</button><button class="btn sm ghost" data-del>삭제</button>`;
+  $('#nurseList').innerHTML=M.nurses.map((n,i)=>`<div class="it" data-k="nurses" data-i="${i}"><span class="no">${i+1}</span>
+    <input type="text" value="${esc(n.name)}" data-f="name" placeholder="이름">${ctl}</div>`).join('')||'<div class="empty">아직 없어요.</div>';
+  $('#docList').innerHTML=M.doctors.map((n,i)=>`<div class="it" data-k="doctors" data-i="${i}"><span class="no">${i+1}</span>
     <input type="text" class="code" value="${esc(n.code)}" data-f="code" placeholder="er16">
-    <input type="text" value="${esc(n.name)}" data-f="name" placeholder="이름">
-    <button class="sm" data-mv="-1">↑</button><button class="sm" data-mv="1">↓</button><button class="sm" data-del>삭제</button></div>`).join('')||'<p class="muted">아직 없어요.</p>';
+    <input type="text" value="${esc(n.name)}" data-f="name" placeholder="이름">${ctl}</div>`).join('')||'<div class="empty">아직 없어요.</div>';
 }
 function staffEvt(e){
   const it=e.target.closest('.it');if(!it)return;
   const arr=M[it.dataset.k],i=+it.dataset.i;
   if(e.type==='input'&&e.target.dataset.f){arr[i][e.target.dataset.f]=e.target.value.trim();save();return}
   if(e.type!=='click')return;
-  if(e.target.hasAttribute('data-del')){
+  const b=e.target.closest('button');if(!b)return;
+  if(b.hasAttribute('data-del')){
     if(!confirm(`'${arr[i].name||arr[i].code}'을(를) 명단에서 지울까요? 이번 달 근무표·통계의 해당 기록도 지워져요.`))return;
     const id=arr[i].id;arr.splice(i,1);delete M.duty[id];
     Object.values(M.stats).forEach(s=>s.doc&&delete s.doc[id]);
-  }else if(e.target.dataset.mv){
-    const j=i+ +e.target.dataset.mv;if(j<0||j>=arr.length)return;[arr[i],arr[j]]=[arr[j],arr[i]];
+  }else if(b.dataset.mv){
+    const j=i+ +b.dataset.mv;if(j<0||j>=arr.length)return;[arr[i],arr[j]]=[arr[j],arr[i]];
   }else return;
   save();renderAll();
 }
 ['#nurseList','#docList'].forEach(s=>{$(s).addEventListener('click',staffEvt);$(s).addEventListener('input',staffEvt)});
 $('#addNurse').onclick=()=>{M.nurses.push({id:uid(),name:''});save();renderStaff();$('#nurseList .it:last-child input').focus()};
 $('#addDoc').onclick=()=>{M.doctors.push({id:uid(),code:'',name:''});save();renderStaff();$('#docList .it:last-child input').focus()};
-function parseDoc(s){const m=s.match(/^([A-Za-z]+\s?\d+)\s+(.+)$/);return m?{code:m[1].replace(/\s/g,''),name:m[2].trim()}:{code:'',name:s}}
+function parseDoc(s){const m=String(s).trim().match(/^([A-Za-z]+\s?\d+)\s*(.*)$/);return m?{code:m[1].replace(/\s/g,''),name:m[2].trim()}:{code:'',name:String(s).trim()}}
 function bulk(kind){
   const names=$('#bulkNames').value.split(/[\n,]/).map(s=>s.trim()).filter(Boolean);
   names.forEach(s=>{if(kind==='n'){if(!M.nurses.some(x=>x.name===s))M.nurses.push({id:uid(),name:s})}
@@ -294,17 +376,18 @@ $('#bulkNurse').onclick=()=>bulk('n');$('#bulkDoc').onclick=()=>bulk('d');
 const NCYC=['','D','E','N','S'],DCYC=['','D','N','DN'];
 let selCell=null;
 function renderDuty(){
-  const n=dim();let h='<tr><th class="nm">이름</th>';
-  for(let d=1;d<=n;d++){const w=wd(d);h+=`<th class="${w===0||w===6?'we':''}">${d}<br><span style="font-weight:500">${WD[w]}</span></th>`}
-  h+='</tr>';
+  const n=dim();let h='<thead><tr><th class="nm"></th>';
+  for(let d=1;d<=n;d++){const w=wd(d);h+=`<th class="${w===0||w===6?'we':''}"><b>${d}</b>${WD[w]}</th>`}
+  h+='</tr></thead><tbody>';
   const rows=(arr,k,lbl)=>{
-    if(!arr.length)return `<tr><td class="nm muted" colspan="${n+1}">${lbl} 명단이 비어 있어요 — ① 근무자 명단에서 추가하세요.</td></tr>`;
-    return `<tr><th class="nm" colspan="1" style="text-align:left">${lbl}</th><th colspan="${n}"></th></tr>`+arr.map(p=>{
+    const g=`<tr class="grp"><td class="nm" style="background:#FAFBFC">${lbl}</td><td colspan="${n}"></td></tr>`;
+    if(!arr.length)return g+`<tr><td class="nm muted" style="font-weight:400">명단 없음</td><td colspan="${n}" class="muted" style="text-align:left;padding:6px 10px">엑셀 근무표를 올리거나 근무자 명단에서 추가하세요.</td></tr>`;
+    return g+arr.map(p=>{
       let r=`<tr><td class="nm">${esc(k==='d'&&p.code?p.code+' ':'')}${esc(p.name)}</td>`;
       for(let d=1;d<=n;d++){const v=(M.duty[p.id]||{})[d]||'';r+=`<td class="c ${v}" data-p="${p.id}" data-k="${k}" data-d="${d}">${v}</td>`}
       return r+'</tr>'}).join('');
   };
-  $('#dutyTbl').innerHTML=h+rows(M.nurses,'n','간호사')+rows(M.doctors,'d','의사');
+  $('#dutyTbl').innerHTML=h+rows(M.nurses,'n','간호사')+rows(M.doctors,'d','의사')+'</tbody>';
   if(selCell){const c=$(`#dutyTbl td.c[data-p="${selCell.p}"][data-d="${selCell.d}"]`);c&&c.classList.add('sel')}
 }
 function setDuty(p,d,v){(M.duty[p]=M.duty[p]||{});if(v)M.duty[p][d]=v;else delete M.duty[p][d]}
@@ -331,24 +414,130 @@ document.addEventListener('keydown',e=>{
   else if(e.key==='ArrowRight'){mv(0,1);e.preventDefault()}else if(e.key==='ArrowLeft'){mv(0,-1);e.preventDefault()}
   else if(e.key==='ArrowDown'){mv(1,0);e.preventDefault()}else if(e.key==='ArrowUp'){mv(-1,0);e.preventDefault()}
 });
-$('#dutyPasteBtn').onclick=()=>{
-  const kind=$('#pasteKind').value,arr=kind==='n'?M.nurses:M.doctors,n=dim();let cnt=0,added=0;
-  $('#dutyPaste').value.split(/\r?\n/).forEach(line=>{
-    if(!line.trim())return;const cells=line.split('\t');const raw=cells[0].trim();if(!raw)return;
-    let p;
-    if(kind==='n')p=arr.find(x=>x.name===raw);
-    else{const d=parseDoc(raw);p=arr.find(x=>(d.code&&x.code===d.code)||x.name===d.name||(x.code&&raw===x.code))}
-    if(!p){p=kind==='n'?{id:uid(),name:raw}:{id:uid(),...parseDoc(raw)};arr.push(p);added++}
-    for(let d=1;d<=n;d++){
-      let v=(cells[d]||'').trim().toUpperCase().replace(/\s/g,'');
-      if(kind==='n')v=['D','E','N','S'].includes(v)?v:'';
-      else v=(v==='D'||v==='N')?v:(['DN','D/N','24','24H','D+N'].includes(v)?'DN':'');
-      setDuty(p.id,d,v);
-    }cnt++;
-  });
-  save();renderAll();alert(`${cnt}명 근무표를 적용했어요.`+(added?` (새로 추가된 이름 ${added}명 — 명단을 확인하세요)`:''));
-};
 $('#dutyClear').onclick=()=>{if(confirm('이번 달 근무표를 모두 지울까요?')){M.duty={};save();renderAll()}};
+
+/* 근무 코드 정리 */
+function normCode(v,kind){
+  let s=String(v??'').trim().toUpperCase().replace(/\s/g,'');
+  if(!s)return'';
+  if(kind==='n'){
+    if(['D','E','N','S'].includes(s))return s;
+    if(/^(D|E|N|S)[0-9'’*]?$/.test(s))return s[0];
+    if(s==='DAY')return'D';if(s==='EVE'||s==='EVENING')return'E';if(s==='NIGHT')return'N';
+    return'';
+  }
+  if(s==='D'||s==='N')return s;
+  if(['DN','D/N','N/D','24','24H','D+N'].includes(s))return'DN';
+  if(/^(D|N)[0-9'’*]?$/.test(s))return s[0];
+  return'';
+}
+function findPerson(kind,raw){
+  if(kind==='n')return M.nurses.find(x=>x.name===raw);
+  const d=parseDoc(raw);
+  return M.doctors.find(x=>(d.code&&x.code===d.code)||(d.name&&x.name===d.name)||(x.code&&raw===x.code));
+}
+function applyRows(rows){ // rows: [{kind,raw,codes:[day1..]}]
+  let added=0;const n=dim();
+  rows.forEach(r=>{
+    let p=findPerson(r.kind,r.raw);
+    if(!p){p=r.kind==='n'?{id:uid(),name:r.raw}:{id:uid(),...parseDoc(r.raw)};(r.kind==='n'?M.nurses:M.doctors).push(p);added++}
+    for(let d=1;d<=n;d++)setDuty(p.id,d,normCode(r.codes[d-1],r.kind));
+  });
+  save();renderAll();return added;
+}
+$('#dutyPasteBtn').onclick=()=>{
+  const kind=$('#pasteKind').value;
+  const rows=$('#dutyPaste').value.split(/\r?\n/).map(l=>l.split('\t')).filter(c=>c[0]&&c[0].trim()).map(c=>({kind,raw:c[0].trim(),codes:c.slice(1)}));
+  if(!rows.length)return;
+  const added=applyRows(rows);$('#dutyPaste').value='';
+  alert(`${rows.length}명 근무표를 적용했어요.`+(added?` (새로 추가된 이름 ${added}명 — 명단을 확인하세요)`:''));
+};
+
+/* 엑셀 근무표 읽기 */
+let xlsWB=null;
+const dayNum=v=>{
+  if(v instanceof Date)return v.getDate();
+  if(typeof v==='number')return Number.isInteger(v)&&v>=1&&v<=31?v:null;
+  const m=String(v??'').trim().match(/^(\d{1,2})\s*일?$/)||String(v??'').trim().match(/^\d{1,2}\s*[\/.]\s*(\d{1,2})\.?$/);
+  return m?+m[1]:null;
+};
+function detectSheet(aoa){
+  // 1,2,3… 이 연속으로 이어지는 줄 = 날짜 줄
+  for(let r=0;r<Math.min(aoa.length,40);r++){
+    const row=aoa[r]||[];
+    for(let c=0;c<row.length;c++){
+      if(dayNum(row[c])!==1)continue;
+      let k=1;while(k<31&&dayNum(row[c+k])===k+1)k++;
+      if(k>=28)return guessNameCol(aoa,r,c,k);
+    }
+  }
+  return null;
+}
+function guessNameCol(aoa,hr,dc,len){
+  let best=-1,bs=0;
+  for(let c=0;c<dc;c++){
+    let s=0;for(let r=hr+1;r<aoa.length;r++){const v=String((aoa[r]||[])[c]??'').trim();if(/^([A-Za-z]+\s?\d+\s*)?[가-힣]{2,5}$/.test(v)||/^[A-Za-z]+\s?\d+$/.test(v))s++}
+    if(s>=bs&&s>0){bs=s;best=c}
+  }
+  if(best<0)return null;
+  const rows=[];
+  for(let r=hr+1;r<aoa.length;r++){
+    const row=aoa[r]||[];const raw=String(row[best]??'').trim();if(!raw||/^(이름|성명|합계|계)$/.test(raw))continue;
+    const codes=Array.from({length:len},(_,i)=>row[dc+i]);
+    const up=codes.map(v=>String(v??'').trim().toUpperCase());
+    if(!up.some(v=>normCode(v,'n')||normCode(v,'d')))continue;
+    let kind=M.doctors.some(x=>findPerson('d',raw)===x)?'d':M.nurses.some(x=>x.name===raw)?'n':
+      (/^[A-Za-z]+\s?\d+/.test(raw)||up.includes('DN')||up.includes('24'))?'d':'n';
+    rows.push({kind,raw,codes,use:true});
+  }
+  return{hr,dc,len,nameCol:best,rows};
+}
+function loadDutyFile(f){
+  if(!window.XLSX){alert('엑셀 기능을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.');return}
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{xlsWB=XLSX.read(rd.result,{type:'array',cellDates:true})}catch(e){$('#dutyPrev').innerHTML='<p class="warn">파일을 읽지 못했어요.</p>';return}
+    // 날짜 줄을 찾을 수 있는 시트 중, 이번 달 숫자가 시트 이름에 들어간 것을 우선
+    const m=+ym.split('-')[1];
+    const cands=xlsWB.SheetNames.filter(n=>detectSheet(XLSX.utils.sheet_to_json(xlsWB.Sheets[n],{header:1,raw:true,defval:''})));
+    const pick=cands.find(n=>new RegExp(`(^|[^0-9])${m}\\s*월`).test(n))||cands[0]||xlsWB.SheetNames[0];
+    showDutyPreview(pick,f.name);
+  };
+  rd.readAsArrayBuffer(f);
+}
+let pv=null;
+function showDutyPreview(sheet,fname){
+  const aoa=XLSX.utils.sheet_to_json(xlsWB.Sheets[sheet],{header:1,raw:true,defval:''});
+  pv=detectSheet(aoa);
+  const sel=xlsWB.SheetNames.length>1?`<select id="pvSheet">${xlsWB.SheetNames.map(n=>`<option ${n===sheet?'selected':''}>${esc(n)}</option>`).join('')}</select>`:'';
+  let h=`<div class="row" style="margin-bottom:8px"><b>${esc(fname||'')}</b>${sel}</div>`;
+  if(!pv||!pv.rows.length){$('#dutyPrev').innerHTML=h+'<p class="warn">이 시트에서 날짜(1, 2, 3…) 줄이나 근무자를 찾지 못했어요. 다른 시트를 고르거나, 아래 "복사해 붙여넣기"를 써 주세요.</p>';bindPv(fname);return}
+  const n=dim();
+  h+=`<p class="muted" style="margin:0 0 8px">${pv.rows.length}명을 찾았어요. 직종이 맞는지 확인하고 적용하세요.`+(pv.len!==n?` <span class="warn">(파일은 ${pv.len}일, 이번 달은 ${n}일)</span>`:'')+`</p>`;
+  h+='<div class="scroll"><table class="pv"><tr><th>적용</th><th>이름</th><th>직종</th><th>근무 수</th><th>미리보기</th></tr>'+pv.rows.map((r,i)=>{
+    const c=r.codes.map(v=>normCode(v,r.kind));
+    return `<tr><td><input type="checkbox" data-use="${i}" ${r.use?'checked':''}></td><td><b>${esc(r.raw)}</b></td>
+      <td><select data-kind="${i}"><option value="n" ${r.kind==='n'?'selected':''}>간호사</option><option value="d" ${r.kind==='d'?'selected':''}>의사</option></select></td>
+      <td>${c.filter(Boolean).length}</td><td class="codes">${c.slice(0,14).map(v=>v||'·').join(' ')}${pv.len>14?' …':''}</td></tr>`}).join('')+'</table></div>';
+  h+=`<div class="row" style="margin-top:10px"><button class="btn pri" id="pvApply">${+ym.split('-')[1]}월 근무표에 적용</button><button class="btn ghost" id="pvCancel">취소</button></div>`;
+  $('#dutyPrev').innerHTML=h;bindPv(fname);
+}
+function bindPv(fname){
+  const s=$('#pvSheet');if(s)s.onchange=()=>showDutyPreview(s.value,fname);
+  const box=$('#dutyPrev');
+  box.onchange=e=>{const t=e.target;if(!pv)return;
+    if(t.dataset.use)pv.rows[+t.dataset.use].use=t.checked;
+    if(t.dataset.kind){pv.rows[+t.dataset.kind].kind=t.value;showDutyPreview($('#pvSheet')?$('#pvSheet').value:xlsWB.SheetNames[0],fname)}};
+  const a=$('#pvApply');if(a)a.onclick=()=>{
+    const rows=pv.rows.filter(r=>r.use);const added=applyRows(rows);
+    $('#dutyPrev').innerHTML=`<p class="muted">✓ ${rows.length}명 근무표를 적용했어요.${added?` 새 이름 ${added}명이 명단에 추가됐어요.`:''}</p>`;pv=null};
+  const c=$('#pvCancel');if(c)c.onclick=()=>{$('#dutyPrev').innerHTML='';pv=null};
+}
+$('#dutyFile').onchange=e=>{const f=e.target.files[0];if(f)loadDutyFile(f);e.target.value=''};
+const drop=$('#drop');
+['dragover','dragenter'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)loadDutyFile(f)});
 
 /* 그날 근무자 */
 function onDuty(arr,d,code){return arr.filter(p=>{const v=(M.duty[p.id]||{})[d]||'';return v===code||(v==='DN'&&(code==='D'||code==='N'))})}
@@ -363,26 +552,26 @@ function dayTotals(d){
 }
 function renderStat(){
   const s=S(day);const working=new Set([...onDuty(M.doctors,day,'D'),...onDuty(M.doctors,day,'N')].map(p=>p.id));
-  let h='<tr><th></th>'+CATS.map(c=>`<th>${c}</th>`).join('')+'<th>계</th></tr>';
-  const row=(lbl,arr,key,cls)=>`<tr class="${cls}"><td class="lb">${lbl}</td>`+CATS.map((c,i)=>`<td><input type="number" min="0" inputmode="numeric" data-r="${key}" data-i="${i}" value="${arr&&num(arr[i])?num(arr[i]):''}"></td>`).join('')+`<td class="rs" data-r="${key}">${(arr||[]).reduce((a,b)=>a+num(b),0)}</td></tr>`;
+  let h='<thead><tr><th></th>'+CATS.map(c=>`<th>${c}</th>`).join('')+'<th class="tot">계</th></tr></thead>';
+  const row=(lbl,arr,key,cls)=>`<tr class="${cls}"><td class="lb">${lbl}</td>`+CATS.map((c,i)=>`<td class="inp"><input type="number" min="0" inputmode="numeric" data-r="${key}" data-i="${i}" value="${arr&&num(arr[i])?num(arr[i]):''}"></td>`).join('')+`<td class="tot rs">${sm(arr||[])}</td></tr>`;
   M.doctors.forEach(p=>{h+=row(`${esc(p.code)} ${esc((p.name||'').slice(0,1))}${working.has(p.id)?'<span class="badge">근무</span>':''}`,s.doc[p.id],p.id,working.has(p.id)?'':'off')});
   h+=row('기타',s.etc,'_etc','');
   h+='<tr class="sum"><td class="lb">합계</td>'+CATS.map((c,i)=>`<td class="ct" data-i="${i}"></td>`).join('')+'<td class="ct" data-i="sum"></td></tr>';
   $('#statTbl').innerHTML=h;
-  $('#drunkTbl').innerHTML='<tr>'+DCATS.map(c=>`<th>${c}</th>`).join('')+'<th>합계</th></tr><tr>'+DCATS.map((c,i)=>`<td><input type="number" min="0" inputmode="numeric" data-dr="${i}" value="${num(s.drunk[i])||''}"></td>`).join('')+'<td id="drunkSum"></td></tr>';
+  $('#drunkTbl').innerHTML='<tr class="h">'+DCATS.map(c=>`<th>${c}</th>`).join('')+'<th>합계</th></tr><tr>'+DCATS.map((c,i)=>`<td class="inp"><input type="number" min="0" inputmode="numeric" data-dr="${i}" value="${num(s.drunk[i])||''}"></td>`).join('')+'<td class="tot" id="drunkSum"></td></tr>';
   $('#sendIn').value=s.send;
   updStatSums();
 }
 function updStatSums(){
   const T=dayTotals(day);
   $$('#statTbl td.ct').forEach(td=>td.textContent=td.dataset.i==='sum'?T.sum:T.t[td.dataset.i]);
-  $('#drunkSum').textContent=T.drunk.reduce((a,b)=>a+b,0);
+  $('#drunkSum').textContent=sm(T.drunk);
 }
 $('#statTbl').addEventListener('input',e=>{
   const r=e.target.dataset.r;if(!r)return;const s=S(day);
   const arr=r==='_etc'?s.etc:(s.doc[r]=s.doc[r]||CATS.map(()=>0));
   arr[+e.target.dataset.i]=num(e.target.value);
-  e.target.closest('tr').querySelector('.rs').textContent=arr.reduce((a,b)=>a+num(b),0);
+  e.target.closest('tr').querySelector('.rs').textContent=sm(arr);
   updStatSums();save();
 });
 $('#drunkTbl').addEventListener('input',e=>{const s=S(day);s.drunk[+e.target.dataset.dr]=num(e.target.value);updStatSums();save()});
@@ -398,14 +587,15 @@ const dot=v=>num(v)?num(v):'·';
 function sheetHTML(d){
   const[y,m]=ym.split('-').map(Number);const T=dayTotals(d);
   const names=(arr,c)=>onDuty(arr,d,c).map(p=>esc(p.name)).join(', ');
+  const nurseD=[...onDuty(M.nurses,d,'S').map(p=>esc(p.name)+'(S)'),...onDuty(M.nurses,d,'D').map(p=>esc(p.name))].join(', ');
   return `<div class="sheet">
-<h3>간호일지</h3>
+<h4>간호일지</h4>
 <div class="dt">${y}. ${m}. ${d} (${WD[wd(d)]})</div>
 <table class="t1"><tr><td>(명)</td>${CATS.map(c=>`<td>${c}</td>`).join('')}<td>총계</td><td>전송<br>건수</td></tr>
 <tr><td>일계</td>${T.t.map(v=>`<td>${dot(v)}</td>`).join('')}<td>${dot(T.sum)}</td><td>${T.send===''?'':dot(T.send)}</td></tr></table>
 <div class="bot">
 <table class="t2">
-<tr><td class="k" rowspan="3">Nr</td><td class="s">D</td><td class="v">${[...onDuty(M.nurses,d,'S').map(p=>esc(p.name)+'(S)'),...onDuty(M.nurses,d,'D').map(p=>esc(p.name))].join(', ')}</td></tr>
+<tr><td class="k" rowspan="3">Nr</td><td class="s">D</td><td class="v">${nurseD}</td></tr>
 <tr><td class="s">E</td><td class="v">${names(M.nurses,'E')}</td></tr>
 <tr><td class="s">N</td><td class="v">${names(M.nurses,'N')}</td></tr>
 <tr><td class="k" rowspan="2">Dr</td><td class="s">D</td><td class="v">${names(M.doctors,'D')}</td></tr>
@@ -413,7 +603,7 @@ function sheetHTML(d){
 </table>
 <table class="t3">
 <tr><td class="hd" colspan="2">주취자 현황</td></tr>
-<tr><td>총계</td><td class="v">${dot(T.drunk.reduce((a,b)=>a+b,0))}</td></tr>
+<tr><td>총계</td><td class="v">${dot(sm(T.drunk))}</td></tr>
 ${DCATS.map((c,i)=>`<tr><td>${c}</td><td class="v">${dot(T.drunk[i])}</td></tr>`).join('')}
 </table>
 </div></div>`;
@@ -423,88 +613,117 @@ function doPrint(days){$('#printArea').innerHTML=days.map(sheetHTML).join('');wi
 $('#printOne').onclick=()=>doPrint([day]);
 $('#printAll').onclick=()=>doPrint(Array.from({length:dim()},(_,i)=>i+1));
 
-/* ---------- 월 합계 ---------- */
+/* ---------- 합계 ---------- */
 function monthAgg(k=ym){
-  const X=DB.months[k]||{doctors:[],stats:{}};const[y,m]=k.split('-').map(Number);
-  const n=new Date(y,m,0).getDate(),doc={},etc=CATS.map(()=>0),drunk=[0,0,0];let send=0,days=0;
+  const X=DB.months[k]||{doctors:[],stats:{}};
+  const n=dimOf(k),doc={},etc=CATS.map(()=>0),drunk=[0,0,0];let send=0,days=0;
   X.doctors.forEach(p=>doc[p.id]=CATS.map(()=>0));
   for(let d=1;d<=n;d++){const s=X.stats[d];if(!s)continue;
     let any=num(s.send)>0;
     X.doctors.forEach(p=>(s.doc&&s.doc[p.id]||[]).forEach((v,i)=>{doc[p.id][i]+=num(v);any=any||num(v)>0}));
     (s.etc||[]).forEach((v,i)=>{etc[i]+=num(v);any=any||num(v)>0});(s.drunk||[]).forEach((v,i)=>{drunk[i]+=num(v);any=any||num(v)>0});send+=num(s.send);if(any)days++}
   const tot=CATS.map((c,i)=>X.doctors.reduce((a,p)=>a+doc[p.id][i],0)+etc[i]);
-  return{doc,etc,tot,drunk,send,days,doctors:X.doctors,exists:!!DB.months[k]};
+  return{doc,etc,tot,drunk,send,days,doctors:X.doctors};
 }
 const dlbl=p=>`${p.code||''} ${(p.name||'').slice(0,1)}`.trim();
-const sm=a=>a.reduce((x,v)=>x+num(v),0);
-/* 기간 합계: 여러 달을 의사(코드+성 기준)별로 합침 */
+const zero=()=>CATS.map(()=>0);
+const addv=(a,b)=>a.map((x,i)=>x+num(b&&b[i]));
+/* 여러 달을 의사(코드+성 기준)별로 합침 */
 function periodAgg(keys){
   const months=keys.map(k=>({k,m:+k.split('-')[1],A:monthAgg(k)}));
   const docs=new Map();
   months.forEach(({k,A})=>A.doctors.forEach(p=>{const l=dlbl(p)||'(이름 없음)';
-    if(!docs.has(l))docs.set(l,{label:l,tot:CATS.map(()=>0),by:{}});
-    const e=docs.get(l);const v=A.doc[p.id];v.forEach((x,i)=>e.tot[i]+=x);
-    e.by[k]=(e.by[k]||CATS.map(()=>0)).map((x,i)=>x+v[i])}));
-  const z=()=>CATS.map(()=>0);
-  const etc=z(),tot=z(),drunk=[0,0,0];let send=0;
-  months.forEach(({A})=>{A.etc.forEach((v,i)=>etc[i]+=v);A.tot.forEach((v,i)=>tot[i]+=v);A.drunk.forEach((v,i)=>drunk[i]+=v);send+=A.send});
+    if(!docs.has(l))docs.set(l,{label:l,tot:zero(),by:{}});
+    const e=docs.get(l);e.tot=addv(e.tot,A.doc[p.id]);e.by[k]=addv(e.by[k]||zero(),A.doc[p.id])}));
+  let etc=zero(),tot=zero(),drunk=[0,0,0],send=0;
+  months.forEach(({A})=>{etc=addv(etc,A.etc);tot=addv(tot,A.tot);drunk=drunk.map((x,i)=>x+A.drunk[i]);send+=A.send});
   return{months,docs:[...docs.values()],etc,tot,drunk,send};
 }
-let sumMode='m';
-function periodKeys(){
-  const[y,m]=ym.split('-').map(Number);
-  if(sumMode==='m')return[ym];
-  const ms=sumMode==='q'?[1,2,3].map(i=>(+$('#qSel').value-1)*3+i):Array.from({length:12},(_,i)=>i+1);
-  return ms.map(x=>`${y}-${String(x).padStart(2,'0')}`);
+let sumMode='m',qSel=new Set();
+const yr=()=>ym.split('-')[0];
+const qKeys=q=>[1,2,3].map(i=>`${yr()}-${pad((q-1)*3+i)}`);
+const selQs=()=>[...qSel].sort();
+function periodTitle(){
+  if(sumMode==='m')return`${yr()}년 ${+ym.split('-')[1]}월 합계`;
+  const qs=selQs();return qs.length===4?`${yr()}년 연간 합계 (1~4분기)`:`${yr()}년 ${qs.join('·')}분기 ${qs.length>1?'합산':'합계'}`;
 }
-function periodTitle(){const y=ym.split('-')[0];return sumMode==='m'?`${y}년 ${+ym.split('-')[1]}월 총합`:sumMode==='q'?`${y}년 ${$('#qSel').value}분기 총합`:`${y}년 연간 총합`}
 function renderSum(){
   $$('#sumMode button').forEach(b=>b.classList.toggle('on',b.dataset.m===sumMode));
-  $('#qSel').style.display=sumMode==='q'?'':'none';
-  $('#perMonth').style.display=sumMode==='m'?'none':'';
-  $('#sumHint').textContent=sumMode==='m'?'위쪽 근무 월에서 달을 바꿀 수 있어요.':`연도는 위쪽 근무 월(${ym.split('-')[0]}년) 기준이에요.`;
-  $('#xlsHint').textContent=sumMode==='m'?'기존 통계 파일과 같은 모양(합계 시트 + 1~31일 시트)으로 만들어져요.':'의사별 합계 · 월별 합계 · 의사별 월별 · 주취자 시트로 만들어져요.';
-  const P=periodAgg(periodKeys());
+  if(sumMode==='q'&&!qSel.size)qSel.add(Math.ceil(+ym.split('-')[1]/3));
+  $('#qPick').style.display=sumMode==='q'?'':'none';
+  $$('#qPick .chip').forEach(c=>c.classList.toggle('on',qSel.has(+c.dataset.q)));
+  $('#qBlock').style.display=$('#perMonth').style.display=sumMode==='m'?'none':'';
+  $('#sumHint').textContent=sumMode==='m'?'맨 위에서 고른 달의 합계예요.':`${yr()}년 기준 · 분기를 여러 개 고르면 분기마다 따로, 그리고 모두 합친 숫자가 같이 나와요.`;
   $('#sumTitle').textContent=periodTitle();
-  const tr=(l,a,cls='')=>`<tr class="${cls}"><td class="lb">${l}</td>${a.map(v=>`<td>${v}</td>`).join('')}<td>${sm(a)}</td></tr>`;
-  const head='<tr><th></th>'+CATS.map(c=>`<th>${c}</th>`).join('')+'<th>계</th></tr>';
-  $('#sumTbl').innerHTML=head+P.docs.map(d=>tr(esc(d.label),d.tot)).join('')+tr('기타',P.etc)+tr('합계',P.tot,'sum');
-  const mlbl=x=>`${x.m}월`+(x.A.days?'':' <span class="muted">(입력 없음)</span>');
-  if(sumMode!=='m'){
-    $('#sumMonthTbl').innerHTML=head+P.months.map(x=>tr(mlbl(x),x.A.tot)).join('')+tr('합계',P.tot,'sum');
-    const cs=$('#cmpCat');if(!cs.options.length)cs.innerHTML=[...CATS,'계'].map((c,i)=>`<option value="${i}">${c}</option>`).join('');
-    const ci=+cs.value,pick=a=>a?(ci===CATS.length?sm(a):a[ci]):0;
-    $('#cmpTbl').innerHTML='<tr><th></th>'+P.months.map(x=>`<th>${x.m}월</th>`).join('')+'<th>합계</th></tr>'+
-      P.docs.map(d=>tr(esc(d.label),P.months.map(x=>pick(d.by[x.k])))).join('').replace(/<td>(\d+)<\/td><\/tr>/g,'<td><b>$1</b></td></tr>')+
-      tr('기타',P.months.map(x=>pick(x.A.etc)))+tr('합계',P.months.map(x=>pick(x.A.tot)),'sum');
+
+  const qs=sumMode==='m'?[]:selQs();
+  const P=periodAgg(sumMode==='m'?[ym]:qs.flatMap(qKeys));
+  const byK=Object.fromEntries(P.months.map(x=>[x.k,x]));
+  const cell=v=>`<td class="${v?'':'z'}">${v}</td>`;
+  const tr=(l,a,cls='')=>`<tr class="${cls}"><td class="lb">${l}</td>${a.map(cell).join('')}<td class="tot">${sm(a)}</td></tr>`;
+  const head='<thead><tr><th></th>'+CATS.map(c=>`<th>${c}</th>`).join('')+'<th class="tot">계</th></tr></thead>';
+  const mlbl=x=>`${x.m}월`+(x.A.days?'':' <span class="muted" style="font-weight:400">(입력 없음)</span>');
+
+  $('#sumTbl').innerHTML=head+P.docs.map(d=>tr(esc(d.label),d.tot)).join('')+tr('기타',P.etc)+tr(sumMode==='m'?'합계':(qs.length>1?'합산':'합계'),P.tot,'sum');
+
+  if(sumMode==='q'){
+    const qTot=q=>qKeys(q).reduce((a,k)=>addv(a,byK[k].A.tot),zero());
+    $('#qTbl').innerHTML=head+qs.map(q=>tr(`${q}분기 <span class="muted" style="font-weight:400">${(q-1)*3+1}~${q*3}월</span>`,qTot(q))).join('')+(qs.length>1?tr(`${qs.join('·')}분기 합산`,P.tot,'sum'):'');
+
+    const cs=$('#cmpCat');if(!cs.options.length)cs.innerHTML=[...CATS,'계'].map((c,i)=>`<option value="${i}" ${i===CATS.length?'selected':''}>${c}</option>`).join('');
+    const ci=+cs.value,pick=a=>a?(ci===CATS.length?sm(a):num(a[ci])):0;
+    // 열: 분기마다 [월, 월, 월, 분기계] + 맨 끝 합산
+    const colsDef=qs.flatMap(q=>[...qKeys(q).map(k=>({k,lb:`${+k.split('-')[1]}월`})),{q,lb:`${q}분기`}]);
+    const valOf=(get,c)=>c.k?pick(get(c.k)):qKeys(c.q).reduce((a,k)=>a+pick(get(k)),0);
+    const crow=(l,get,cls='')=>{const vals=colsDef.map(c=>valOf(get,c));const total=qs.flatMap(qKeys).reduce((a,k)=>a+pick(get(k)),0);
+      return `<tr class="${cls}"><td class="lb">${l}</td>${vals.map((v,i)=>colsDef[i].q?`<td class="tot">${v}</td>`:cell(v)).join('')}<td class="tot">${total}</td></tr>`};
+    $('#cmpTbl').innerHTML='<thead><tr><th></th>'+colsDef.map(c=>`<th class="${c.q?'tot':''}">${c.lb}</th>`).join('')+`<th class="tot">${qs.length>1?'합산':'합계'}</th></tr></thead>`+
+      P.docs.map(d=>crow(esc(d.label),k=>d.by[k])).join('')+crow('기타',k=>byK[k].A.etc)+crow('합계',k=>byK[k].A.tot,'sum');
+
+    $('#sumMonthTbl').innerHTML=head+qs.map(q=>qKeys(q).map(k=>tr(mlbl(byK[k]),byK[k].A.tot)).join('')+tr(`${q}분기 계`,qTot(q),'sub')).join('')+tr(qs.length>1?`${qs.join('·')}분기 합산`:'합계',P.tot,'sum');
   }
-  const drow=(l,dr,send,cls='')=>`<tr class="${cls}"><td class="lb">${l}</td>${dr.map(v=>`<td>${v}</td>`).join('')}<td>${sm(dr)}</td><td>${send}</td></tr>`;
-  $('#sumDrunk').innerHTML=`<tr><th></th>${DCATS.map(c=>`<th>주취 ${c}</th>`).join('')}<th>주취 합계</th><th>전송 건수</th></tr>`+
-    (sumMode==='m'?drow(`${+ym.split('-')[1]}월`,P.drunk,P.send):P.months.map(x=>drow(mlbl(x),x.A.drunk,x.A.send)).join('')+drow('합계',P.drunk,P.send,'sum'));
+
+  const dhead=`<thead><tr><th></th>${DCATS.map(c=>`<th>주취 ${c}</th>`).join('')}<th class="tot">주취 합계</th><th>전송 건수</th></tr></thead>`;
+  const drow=(l,dr,send,cls='')=>`<tr class="${cls}"><td class="lb">${l}</td>${dr.map(cell).join('')}<td class="tot">${sm(dr)}</td>${cell(send)}</tr>`;
+  if(sumMode==='m')$('#sumDrunk').innerHTML=dhead+drow(`${+ym.split('-')[1]}월`,P.drunk,P.send);
+  else{
+    const qd=q=>qKeys(q).reduce((a,k)=>a.map((x,i)=>x+byK[k].A.drunk[i]),[0,0,0]),qs2=q=>qKeys(q).reduce((a,k)=>a+byK[k].A.send,0);
+    $('#sumDrunk').innerHTML=dhead+qs.map(q=>qKeys(q).map(k=>drow(mlbl(byK[k]),byK[k].A.drunk,byK[k].A.send)).join('')+drow(`${q}분기 계`,qd(q),qs2(q),'sub')).join('')+
+      drow(qs.length>1?`${qs.join('·')}분기 합산`:'합계',P.drunk,P.send,'sum');
+  }
 }
-$('#sumMode').onclick=e=>{const b=e.target.closest('button');if(!b)return;sumMode=b.dataset.m;
-  if(sumMode==='q'&&!$('#qSel').dataset.set)$('#qSel').value=Math.ceil(+ym.split('-')[1]/3);renderSum()};
-$('#qSel').onchange=()=>{$('#qSel').dataset.set=1;renderSum()};
+$('#sumMode').onclick=e=>{const b=e.target.closest('button');if(!b)return;sumMode=b.dataset.m;renderSum()};
+$('#qPick').onclick=e=>{
+  const c=e.target.closest('.chip');
+  if(e.target.id==='qAll'){[1,2,3,4].forEach(q=>qSel.add(q))}
+  else if(c){const q=+c.dataset.q;if(qSel.has(q)&&qSel.size>1)qSel.delete(q);else qSel.add(q)}
+  else return;renderSum()};
 $('#cmpCat').onchange=renderSum;
-function xlsPeriod(){
-  const P=periodAgg(periodKeys()),wb=XLSX.utils.book_new(),t=periodTitle();
-  const add=(a,name,w)=>{const ws=XLSX.utils.aoa_to_sheet(a);ws['!cols']=[{wch:w||11},...Array(40).fill({wch:7})];XLSX.utils.book_append_sheet(wb,ws,name)};
-  const r=(l,a)=>[l,...a,sm(a)];
-  add([[t+' - 의사별'],[],['',...CATS,'계'],...P.docs.map(d=>r(d.label,d.tot)),r('기타',P.etc),r('합계',P.tot)],'의사별 합계');
-  add([[t+' - 월별'],[],['',...CATS,'계'],...P.months.map(x=>r(x.m+'월',x.A.tot)),r('합계',P.tot)],'월별 합계');
-  const h1=[''],h2=[''];P.months.forEach(x=>{h1.push(x.m+'월',...Array(CATS.length));h2.push(...CATS,'계')});
-  const row=(l,get)=>[l,...P.months.flatMap(x=>{const a=get(x)||CATS.map(()=>0);return[...a,sm(a)]})];
-  const ws=[[t+' - 의사별 월별'],[],h1,h2,...P.docs.map(d=>row(d.label,x=>d.by[x.k])),row('기타',x=>x.A.etc),row('합계',x=>x.A.tot)];
-  add(ws,'의사별 월별');
+
+/* 엑셀 내려받기 */
+function xlsQuarter(){
+  const qs=selQs(),P=periodAgg(qs.flatMap(qKeys)),byK=Object.fromEntries(P.months.map(x=>[x.k,x])),wb=XLSX.utils.book_new(),t=periodTitle();
+  const add=(a,name,merges)=>{const ws=XLSX.utils.aoa_to_sheet(a);ws['!cols']=[{wch:14},...Array(60).fill({wch:7})];if(merges)ws['!merges']=merges;XLSX.utils.book_append_sheet(wb,ws,name)};
+  const r=(l,a)=>[l,...a,sm(a)];const H=['',...CATS,'계'];
+  const qTot=q=>qKeys(q).reduce((a,k)=>addv(a,byK[k].A.tot),zero());
+  const all=qs.length>1?`${qs.join('·')}분기 합산`:'합계';
+  add([[t+' - 분기별'],[],H,...qs.map(q=>r(`${q}분기`,qTot(q))),...(qs.length>1?[r(all,P.tot)]:[])],'분기별 합계');
+  add([[t+' - 의사별'],[],H,...P.docs.map(d=>r(d.label,d.tot)),r('기타',P.etc),r(all,P.tot)],'의사별 합계');
+  // 의사별 월별: 월마다 / 분기 계마다 항목 블록
+  const cols=qs.flatMap(q=>[...qKeys(q).map(k=>({k,lb:`${+k.split('-')[1]}월`})),{q,lb:`${q}분기 계`}]);
+  const h1=[''],h2=[''],mg=[];cols.forEach((c,i)=>{h1.push(c.lb,...Array(CATS.length));h2.push(...CATS,'계');mg.push({s:{r:2,c:1+i*8},e:{r:2,c:8+i*8}})});
+  const rowOf=(l,get)=>[l,...cols.flatMap(c=>{const a=c.k?addv(zero(),get(c.k)):qKeys(c.q).reduce((x,k)=>addv(x,get(k)),zero());return[...a,sm(a)]})];
+  add([[t+' - 의사별 월별'],[],h1,h2,...P.docs.map(d=>rowOf(d.label,k=>d.by[k])),rowOf('기타',k=>byK[k].A.etc),rowOf('합계',k=>byK[k].A.tot)],'의사별 월별',mg);
+  add([[t+' - 월별'],[],H,...qs.flatMap(q=>[...qKeys(q).map(k=>r(`${+k.split('-')[1]}월`,byK[k].A.tot)),r(`${q}분기 계`,qTot(q))]),r(all,P.tot)],'월별 합계');
   const dr=(l,d,s)=>[l,...d,sm(d),s];
-  add([[t+' - 주취자'],[],['',...DCATS,'합계','전송건수'],...P.months.map(x=>dr(x.m+'월',x.A.drunk,x.A.send)),dr('합계',P.drunk,P.send)],'주취자');
-  XLSX.writeFile(wb,`${t.replace(' 총합','')} 통계.xlsx`);
+  const qd=q=>qKeys(q).reduce((a,k)=>a.map((x,i)=>x+byK[k].A.drunk[i]),[0,0,0]),qsd=q=>qKeys(q).reduce((a,k)=>a+byK[k].A.send,0);
+  add([[t+' - 주취자'],[],['',...DCATS,'합계','전송건수'],...qs.flatMap(q=>[...qKeys(q).map(k=>dr(`${+k.split('-')[1]}월`,byK[k].A.drunk,byK[k].A.send)),dr(`${q}분기 계`,qd(q),qsd(q))]),dr(all,P.drunk,P.send)],'주취자');
+  XLSX.writeFile(wb,`${t} 통계.xlsx`);
 }
 $('#xlsBtn').onclick=()=>{
   if(!window.XLSX){alert('엑셀 기능을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.');return}
-  if(sumMode!=='m')return xlsPeriod();
+  if(sumMode==='q')return xlsQuarter();
   const[y,m]=ym.split('-').map(Number);const wb=XLSX.utils.book_new();
-  const lbl=p=>`${p.code} ${(p.name||'').slice(0,1)}`.trim();
   const build=(title,docRows,etc,tot,drunk,send,dateCols)=>{
     const a=[[],[title],dateCols[0],['',...CATS,'계','',...dateCols[1]]];
     docRows.forEach(([l,r])=>a.push([l,...r,sm(r)]));
@@ -515,50 +734,50 @@ $('#xlsBtn').onclick=()=>{
     ws['!cols']=[{wch:11},...CATS.map(()=>({wch:7})),{wch:7}];return ws;
   };
   const A=monthAgg();
-  XLSX.utils.book_append_sheet(wb,build(`${y}년 ${m}월 총합`,M.doctors.map(p=>[lbl(p),A.doc[p.id]]),A.etc,A.tot,A.drunk,A.send,[['','','','','','','','','','','year','month'],[y,m]]),'합계');
-  for(let d=1;d<=dim();d++){const s=S(d),T=dayTotals(d);
-    XLSX.utils.book_append_sheet(wb,build(`${y}년 ${m}월 ${d}일`,M.doctors.map(p=>[lbl(p),CATS.map((c,i)=>num((s.doc[p.id]||[])[i]))]),s.etc.map(num),T.t,T.drunk,T.send,[['','','','','','','','','','','year','month','day'],[y,m,d]]),String(d))}
+  XLSX.utils.book_append_sheet(wb,build(`${y}년 ${m}월 총합`,M.doctors.map(p=>[dlbl(p),A.doc[p.id]]),A.etc,A.tot,A.drunk,A.send,[['','','','','','','','','','','year','month'],[y,m]]),'합계');
+  for(let d=1;d<=dim();d++){const s=M.stats[d]||{},T=dayTotals(d);
+    XLSX.utils.book_append_sheet(wb,build(`${y}년 ${m}월 ${d}일`,M.doctors.map(p=>[dlbl(p),CATS.map((c,i)=>num(((s.doc||{})[p.id]||[])[i]))]),CATS.map((c,i)=>num((s.etc||[])[i])),T.t,T.drunk,T.send,[['','','','','','','','','','','year','month','day'],[y,m,d]]),String(d))}
   XLSX.writeFile(wb,`${String(y).slice(2)}년 ${m}월 통계.xlsx`);
 };
 
 /* ---------- 공통 ---------- */
 function renderDays(){
-  const n=dim();const opts=Array.from({length:n},(_,i)=>{const d=i+1;return `<option value="${d}">${+ym.split('-')[1]}월 ${d}일 (${WD[wd(d)]})</option>`}).join('');
+  const n=dim(),mm=+ym.split('-')[1];
+  const opts=Array.from({length:n},(_,i)=>{const d=i+1;return `<option value="${d}">${mm}월 ${d}일 (${WD[wd(d)]})</option>`}).join('');
   $$('.daySel').forEach(s=>{s.innerHTML=opts;s.value=day});
-  const info=`근무 의사: D ${onDuty(M.doctors,day,'D').map(p=>p.name).join(', ')||'-'} / N ${onDuty(M.doctors,day,'N').map(p=>p.name).join(', ')||'-'}`;
-  $$('.dayInfo').forEach(e=>e.textContent=info);
+  const nm=c=>onDuty(M.doctors,day,c).map(p=>p.name).join(', ')||'-';
+  $$('.dayInfo').forEach(e=>e.textContent=`근무 의사  D ${nm('D')}  ·  N ${nm('N')}`);
 }
 function renderTab(){
   $$('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
   $$('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+tab));
-  if(tab==='staff')renderStaff();if(tab==='duty')renderDuty();if(tab==='stat')renderStat();if(tab==='log')renderLog();if(tab==='sum')renderSum();
+  ({staff:renderStaff,duty:renderDuty,stat:renderStat,log:renderLog,sum:renderSum})[tab]();
 }
 function renderAll(){renderDays();renderTab()}
 $('#tabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;tab=b.dataset.t;try{sessionStorage.setItem('erlog:tab',tab)}catch(x){}renderAll()};
 document.addEventListener('change',e=>{if(e.target.classList.contains('daySel')){day=+e.target.value;renderAll()}});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-dd]');if(!b)return;const nd=day+ +b.dataset.dd;if(nd>=1&&nd<=dim()){day=nd;renderAll()}});
+$('#mPrev').onclick=()=>shiftMonth(-1);$('#mNext').onclick=()=>shiftMonth(1);
 
-// 월 선택
 (function(){
-  const now=new Date();const def=DB.last||`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const[y0]=def.split('-').map(Number);
+  const now=new Date();const today=`${now.getFullYear()}-${pad(now.getMonth()+1)}`;const def=DB.last||today;
+  const y0=+def.split('-')[0];
   $('#ySel').innerHTML=Array.from({length:5},(_,i)=>y0-2+i).map(y=>`<option value="${y}">${y}년</option>`).join('');
-  $('#mSel').innerHTML=Array.from({length:12},(_,i)=>`<option value="${String(i+1).padStart(2,'0')}">${i+1}월</option>`).join('');
-  const[yy,mm]=def.split('-');$('#ySel').value=yy;$('#mSel').value=mm;
+  $('#mSel').innerHTML=Array.from({length:12},(_,i)=>`<option value="${pad(i+1)}">${i+1}월</option>`).join('');
   const go=()=>{day=1;openMonth($('#ySel').value+'-'+$('#mSel').value)};
   $('#ySel').onchange=go;$('#mSel').onchange=go;
   try{tab=sessionStorage.getItem('erlog:tab')||'staff'}catch(x){}
-  const today=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
   if(def===today)day=now.getDate();
   openMonth(def);
 })();
 
-// 백업
+/* 백업 */
 $('#bkSave').onclick=()=>{const b=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'});const a=document.createElement('a');
   a.href=URL.createObjectURL(b);a.download=`간호일지_백업_${new Date().toISOString().slice(0,10)}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$('#bkLoadBtn').onclick=()=>$('#bkLoad').click();
 $('#bkLoad').onchange=async e=>{const f=e.target.files[0];if(!f)return;
   try{const d=JSON.parse(await f.text());if(!d.months)throw 0;
     if(!confirm('백업 파일 내용으로 바꿀까요? 지금 브라우저에 있는 내용은 덮어써져요.'))return;
-    DB=d;const k=DB.last||Object.keys(DB.months).sort().pop();if(k){const[y,m]=k.split('-');if(![...$('#ySel').options].some(o=>o.value===y))$('#ySel').insertAdjacentHTML('beforeend',`<option value="${y}">${y}년</option>`);$('#ySel').value=y;$('#mSel').value=m;openMonth(k)}
+    DB=d;const k=DB.last||Object.keys(DB.months).sort().pop();if(k)openMonth(k);
   }catch(x){alert('백업 파일을 읽지 못했어요.')}e.target.value=''};
 </script></body></html>
