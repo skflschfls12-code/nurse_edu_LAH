@@ -321,6 +321,12 @@ footer{max-width:1040px;margin:0 auto;padding:0 16px 40px;display:flex;gap:8px;a
     <p class="muted" id="sumHint" style="margin:6px 0 0"></p>
   </div>
 
+  <div class="card" id="finCard">
+    <h2>월 최종 통계 직접 입력 <span class="sp"></span><label class="hn" id="finToggle"><input type="checkbox" id="finOn">이 달은 최종 통계로 입력</label></h2>
+    <p class="desc">지난 달처럼 일일 통계가 없는 달은 한 달 합계만 입력. 체크하면 이 달 합계·분기 합산에 이 숫자가 쓰임. 엑셀 합계 표를 복사해 붙여넣기도 가능(의사 이름 칸까지 복사하면 이름으로 맞춰 들어감).</p>
+    <div id="finBody"></div>
+  </div>
+
   <div class="card">
     <h2 id="sumTitle"></h2>
     <div id="qBlock">
@@ -1080,8 +1086,10 @@ const dot=v=>num(v)?num(v):'·';
 function sheetHTML(d){
   const[y,m]=ym.split('-').map(Number);const T=dayTotals(d);
   const names=(arr,c)=>onDuty(arr,d,c).map(p=>esc(dName(p))).join(', ');
-  const sN=M.nurses.filter(p=>{const v=getDuty(p.id,d);return v==='S'||(p.head&&v==='D')});
-  const nurseD=[...sN.map(p=>esc(p.name)+'(S)'),...onDuty(M.nurses,d,'D').filter(p=>!sN.includes(p)).map(p=>esc(p.name))].join(', ');
+  // HN(D·S 근무)은 맨 앞, 나머지 D·S 근무자는 명단(근무서열) 순서대로
+  const hn=M.nurses.filter(p=>p.head&&['D','S'].includes(getDuty(p.id,d)));
+  const rest=M.nurses.filter(p=>!hn.includes(p)&&['D','S'].includes(getDuty(p.id,d)));
+  const nurseD=[...hn.map(p=>esc(p.name)+'(S)'),...rest.map(p=>esc(p.name)+(getDuty(p.id,d)==='S'?'(S)':''))].join(', ');
   const W1=[17.1,22.7,22.7,22.7,22.7,22.7,22.7,22.7,22.7,23.8];
   const inn=i=>i===0?'':`in${i===1?' first':''}${i===9?' last':''}`;
   const head=['(명)',...CATS,'총계','전송<br>건수'],vals=['일계',...T.t.map(dot),dot(T.sum),T.send===''?'':dot(T.send)];
@@ -1120,6 +1128,12 @@ $('#printAll').onclick=()=>doPrint(Array.from({length:dim()},(_,i)=>i+1));
 /* ---------- 합계 ---------- */
 function monthAgg(k=ym){
   const X=DB.months[k]||{doctors:[],stats:{}};
+  if(X.useFinal&&X.final){ // 월 최종 통계로 입력한 달
+    const F=X.final,doc={};X.doctors.forEach(p=>doc[p.id]=CATS.map((c,i)=>num((F.doc[p.id]||[])[i])));
+    const etc=CATS.map((c,i)=>num((F.etc||[])[i])),drunk=[0,1,2].map(i=>num((F.drunk||[])[i]));
+    const tot=CATS.map((c,i)=>X.doctors.reduce((a,p)=>a+doc[p.id][i],0)+etc[i]);
+    return{doc,etc,tot,drunk,send:num(F.send),days:sm(tot)||sm(drunk)?1:0,doctors:X.doctors,final:true};
+  }
   const n=dimOf(k),doc={},etc=CATS.map(()=>0),drunk=[0,0,0];let send=0,days=0;
   X.doctors.forEach(p=>doc[p.id]=CATS.map(()=>0));
   for(let d=1;d<=n;d++){const s=X.stats[d];if(!s)continue;
@@ -1150,7 +1164,8 @@ function periodTitle(){
   if(sumMode==='m')return`${yr()}년 ${+ym.split('-')[1]}월 합계`;
   const qs=selQs();return qs.length===4?`${yr()}년 연간 합계 (1~4분기)`:`${yr()}년 ${qs.join('·')}분기 ${qs.length>1?'합산':'합계'}`;
 }
-function renderSum(){
+function renderSum(){renderFinal();renderSumTables()}
+function renderSumTables(){
   $$('#sumMode button').forEach(b=>b.classList.toggle('on',b.dataset.m===sumMode));
   if(sumMode==='q'&&!qSel.size)qSel.add(Math.ceil(+ym.split('-')[1]/3));
   $('#qPick').style.display=sumMode==='q'?'':'none';
@@ -1165,7 +1180,7 @@ function renderSum(){
   const cell=v=>`<td class="${v?'':'z'}">${v}</td>`;
   const tr=(l,a,cls='')=>`<tr class="${cls}"><td class="lb">${l}</td>${a.map(cell).join('')}<td class="tot">${sm(a)}</td></tr>`;
   const head='<thead><tr><th></th>'+CATS.map(c=>`<th>${c}</th>`).join('')+'<th class="tot">계</th></tr></thead>';
-  const mlbl=x=>`${x.m}월`+(x.A.days?'':' <span class="muted" style="font-weight:400">(입력 없음)</span>');
+  const mlbl=x=>`${x.m}월`+(x.A.final?' <span class="muted" style="font-weight:400">(최종 입력)</span>':x.A.days?'':' <span class="muted" style="font-weight:400">(입력 없음)</span>');
 
   $('#sumTbl').innerHTML=head+P.docs.map(d=>tr(esc(d.label),d.tot)).join('')+tr('기타',P.etc)+tr(sumMode==='m'?'합계':(qs.length>1?'합산':'합계'),P.tot,'sum');
 
@@ -1202,6 +1217,66 @@ $('#qPick').onclick=e=>{
   else if(c){const q=+c.dataset.q;if(qSel.has(q)&&qSel.size>1)qSel.delete(q);else qSel.add(q)}
   else return;renderSum()};
 $('#cmpCat').onchange=renderSum;
+
+/* 월 최종 통계 직접 입력 */
+function F(){return M.final=M.final||{doc:{},etc:CATS.map(()=>0),drunk:[0,0,0],send:''}}
+function renderFinal(){
+  $('#finCard').style.display=sumMode==='m'?'':'none';if(sumMode!=='m')return;
+  $('#finOn').checked=!!M.useFinal;$('#finToggle').classList.toggle('on',!!M.useFinal);
+  if(!M.useFinal){
+    const days=Object.values(M.stats).filter(s=>Object.values(s.doc||{}).some(a=>sm(a))||sm(s.etc||[])).length;
+    $('#finBody').innerHTML=`<p class="muted" style="margin:0">${days?`이 달은 일일 통계 ${days}일치가 있어서 그걸로 합계를 내는 중. `:''}체크하면 입력 칸이 나옴.</p>`;return}
+  const f=F(),inp=(r,i,v)=>`<td class="inp"><input type="number" min="0" inputmode="numeric" data-fr="${r}" data-fi="${i}" value="${num(v)||''}"></td>`;
+  let h='<div class="scroll"><table class="st" id="finTbl"><thead><tr><th></th>'+CATS.map(c=>`<th>${c}</th>`).join('')+'<th class="tot">계</th></tr></thead>';
+  const row=(lb,key,arr)=>`<tr data-lb="${esc(lb)}"><td class="lb">${esc(lb)}</td>${CATS.map((c,i)=>inp(key,i,(arr||[])[i])).join('')}<td class="tot rs">${sm(arr||[])}</td></tr>`;
+  M.doctors.forEach(p=>h+=row(dlbl(p),p.id,f.doc[p.id]));
+  h+=row('기타','_etc',f.etc);
+  h+='<tr class="sum"><td class="lb">합계</td>'+CATS.map((c,i)=>`<td class="fct" data-i="${i}"></td>`).join('')+'<td class="fct" data-i="sum"></td></tr></table></div>';
+  h+=`<div class="cols" style="margin-top:14px"><div><h3>주취자</h3><table class="st"><tr class="h">${DCATS.map(c=>`<th>${c}</th>`).join('')}<th>합계</th></tr><tr>${DCATS.map((c,i)=>inp('_dr',i,f.drunk[i])).join('')}<td class="tot" id="finDr"></td></tr></table></div>
+    <div><h3>전송 건수</h3><table class="st"><tr class="h"><th>전송 건수</th></tr><tr>${inp('_send',0,f.send)}</tr></table></div></div>`;
+  if(!M.doctors.length)h='<p class="warn">근무자 명단에 의사가 없음. 의사를 먼저 추가.</p>'+h;
+  $('#finBody').innerHTML=h;updFinal();
+}
+function updFinal(){
+  const f=F(),t=CATS.map((c,i)=>M.doctors.reduce((a,p)=>a+num((f.doc[p.id]||[])[i]),0)+num(f.etc[i]));
+  $$('#finTbl td.fct').forEach(td=>td.textContent=td.dataset.i==='sum'?sm(t):t[td.dataset.i]);
+  const d=$('#finDr');if(d)d.textContent=sm(f.drunk);
+}
+function setFinal(key,i,v){
+  const f=F();
+  if(key==='_etc')f.etc[i]=v;else if(key==='_dr')f.drunk[i]=v;else if(key==='_send')f.send=v===''?'':v;
+  else{(f.doc[key]=f.doc[key]||CATS.map(()=>0))[i]=v}
+}
+$('#finOn').onchange=e=>{M.useFinal=e.target.checked;save();renderSum()};
+$('#finBody').addEventListener('input',e=>{const t=e.target;if(!t.dataset.fr)return;
+  setFinal(t.dataset.fr,+t.dataset.fi,t.dataset.fr==='_send'&&t.value===''?'':num(t.value));
+  const tr=t.closest('tr');const rs=tr&&tr.querySelector('.rs');if(rs)rs.textContent=sm([...tr.querySelectorAll('input')].map(x=>x.value));
+  updFinal();save();renderSumTables();
+});
+$('#finBody').addEventListener('keydown',e=>{if(e.key!=='Enter'||!e.target.dataset.fr)return;e.preventDefault();const all=$$('#finBody input');(all[all.indexOf(e.target)+1]||all[0]).focus()});
+$('#finBody').addEventListener('focusin',e=>{if(e.target.select)e.target.select()});
+// 엑셀에서 복사한 표 붙여넣기: 이름 칸이 있으면 이름으로, 없으면 지금 칸부터 차례로
+$('#finBody').addEventListener('paste',e=>{
+  const t=e.target;if(!t.dataset||!t.dataset.fr||t.dataset.fr==='_dr'||t.dataset.fr==='_send')return;
+  const txt=e.clipboardData.getData('text/plain');if(!/[\t\n]/.test(txt.trim()))return;
+  e.preventDefault();
+  const rows=txt.replace(/\r/g,'').split('\n').filter(l=>l.trim()).map(l=>l.split('\t'));
+  const trs=[...$$('#finTbl tbody tr, #finTbl tr[data-lb]')].filter((x,i,a)=>x.dataset.lb&&a.indexOf(x)===i);
+  let ri=trs.indexOf(t.closest('tr')),miss=[];
+  rows.forEach(cells=>{
+    let tr=null,vals=cells;
+    if(cells.length&&cells[0].trim()&&isNaN(+cells[0].replace(/,/g,''))){ // 첫 칸이 이름
+      const lb=cells[0].trim();vals=cells.slice(1);
+      if(/^(합계|계|총계)$/.test(nsp(lb)))return;
+      tr=trs.find(x=>nkey(x.dataset.lb)===nkey(lb))||null;if(!tr){miss.push(lb);return}
+    }else{tr=trs[ri++];if(!tr)return}
+    const ins=[...tr.querySelectorAll('input')];const start=tr===t.closest('tr')&&cells===vals?ins.indexOf(t):0;
+    vals.slice(0,CATS.length).forEach((v,j)=>{const x=ins[start+j];if(!x)return;const n=num(String(v).replace(/,/g,''));x.value=n||'';setFinal(x.dataset.fr,+x.dataset.fi,n)});
+    const rs=tr.querySelector('.rs');if(rs)rs.textContent=sm(ins.map(x=>x.value));
+  });
+  updFinal();save();renderSumTables();
+  if(miss.length)alert(`명단에 없는 이름이라 건너뜀: ${miss.join(', ')}\n근무자 명단에 추가하거나 통계 이름(er16 하)을 맞춘 뒤 다시 붙여넣기.`);
+});
 
 /* 엑셀 내려받기 */
 function xlsQuarter(){
