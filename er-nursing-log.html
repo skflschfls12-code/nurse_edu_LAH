@@ -99,7 +99,6 @@ td.c.mod::after{content:"";position:absolute;top:3px;right:3px;width:6px;height:
 .chg{list-style:none;margin:0;padding:0;max-height:300px;overflow:auto}
 .chg li{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line2);font-size:.86rem}
 .chg li .k{display:inline-block;min-width:26px;text-align:center;border-radius:5px;font-weight:700;padding:0 5px;background:var(--line2);font-size:.8rem}
-.chg li .tag{font-size:.72rem;color:var(--acc);background:var(--accs);border-radius:5px;padding:0 5px}
 .chg li .tm{color:var(--faint);font-size:.75rem}
 .legend{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:.8rem;color:var(--sub)}
 .legend span.k{display:inline-block;min-width:28px;text-align:center;border-radius:5px;font-weight:700;padding:1px 6px}
@@ -530,11 +529,11 @@ const isMod=(p,d)=>!!((M.mod||{})[p]||{})[d];
 const person=id=>M.nurses.find(x=>x.id===id)||M.doctors.find(x=>x.id===id);
 const kindOf=id=>M.nurses.some(x=>x.id===id)?'n':'d';
 /* 손으로 고친 근무: 내역에 남기고 칸에 표시 */
-function editDuty(p,d,v,note){
+function editDuty(p,d,v){
   const cur=getDuty(p,d);if(cur===v)return;
   setDuty(p,d,v);
   M.mod=M.mod||{};(M.mod[p]=M.mod[p]||{})[d]=1;
-  (M.chg=M.chg||[]).unshift({t:Date.now(),p,d:+d,from:cur,to:v,note:note||''});
+  (M.chg=M.chg||[]).unshift({t:Date.now(),p,d:+d,from:cur,to:v});
 }
 function paintCell(td){const p=td.dataset.p,d=td.dataset.d,v=getDuty(p,d);td.className='c '+v+(isMod(p,d)?' mod':'')+(selCell&&selCell.p===p&&+selCell.d===+d?' sel':'');td.textContent=v}
 function afterEdit(){save();renderChg()}
@@ -568,18 +567,14 @@ function renderChg(){
   const mm=+ym.split('-')[1];const list=(M.chg||[]).filter(c=>person(c.p));
   const k=v=>`<span class="k ${v}">${v||'휴'}</span>`;
   $('#chgList').innerHTML=list.length?list.map(c=>{const i=M.chg.indexOf(c);
-    return `<li><span style="min-width:62px">${mm}/${c.d}(${WD[wd(c.d)]})</span><b>${esc(person(c.p).name)}</b>${k(c.from)}→${k(c.to)}${c.note?`<span class="tag">${esc(c.note)}</span>`:''}<span class="sp"></span><span class="tm">${new Date(c.t).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'})}</span><button class="btn sm ghost" data-undo="${i}">되돌리기</button></li>`}).join('')
+    return `<li><span style="min-width:62px">${mm}/${c.d}(${WD[wd(c.d)]})</span><b>${esc(person(c.p).name)}</b>${k(c.from)}→${k(c.to)}<span class="sp"></span><span class="tm">${new Date(c.t).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'})}</span><button class="btn sm ghost" data-undo="${i}">되돌리기</button></li>`}).join('')
     :'<li class="muted" style="border:0">아직 고친 근무가 없어요.</li>';
 }
 $('#chgList').addEventListener('click',e=>{
   const b=e.target.closest('[data-undo]');if(!b)return;
   const c=M.chg[+b.dataset.undo];if(!c)return;
-  // 맞교대는 짝도 같이 되돌림
-  const pair=c.note&&c.note.endsWith('맞교대')?M.chg.find(x=>x!==c&&x.t===c.t&&x.d===c.d):null;
-  [c,pair].filter(Boolean).forEach(x=>{
-    setDuty(x.p,x.d,x.from);M.chg.splice(M.chg.indexOf(x),1);
-    if(!M.chg.some(y=>y.p===x.p&&y.d===x.d)&&M.mod&&M.mod[x.p])delete M.mod[x.p][x.d];
-  });
+  setDuty(c.p,c.d,c.from);M.chg.splice(M.chg.indexOf(c),1);
+  if(!M.chg.some(y=>y.p===c.p&&y.d===c.d)&&M.mod&&M.mod[c.p])delete M.mod[c.p][c.d];
   save();renderDuty();
 });
 $('#chgClear').onclick=()=>{if(!(M.chg||[]).length)return;if(confirm('변경 내역을 지울까요? 근무표는 지금 상태 그대로 남고, 고친 칸 표시(●)만 없어져요.')){M.chg=[];M.mod={};save();renderDuty()}};
