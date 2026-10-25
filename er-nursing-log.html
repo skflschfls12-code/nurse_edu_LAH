@@ -48,6 +48,12 @@ table.st tr.sum td{background:#F1EEE6;font-weight:800}
 table.st input{width:100%;min-width:38px;text-align:center;border:0;padding:6px 2px;background:transparent;-moz-appearance:textfield}
 table.st input:focus{background:#FFF3C4;outline:none}
 table.st input::-webkit-outer-spin-button,table.st input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.seg{display:inline-flex;border:2px solid #20242B;border-radius:10px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:6px 14px}
+.seg button+button{border-left:2px solid #20242B}
+.seg button.on{background:#20242B;color:#fff}
+h3.sub{font-size:.95rem;margin:16px 0 6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+table.st td.nodata{color:#A8A396}
 .badge{display:inline-block;font-size:.72rem;background:#20242B;color:#fff;border-radius:6px;padding:0 5px;margin-left:4px;vertical-align:1px}
 .daynav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .daynav select{font-weight:800}
@@ -97,7 +103,7 @@ table.st input::-webkit-outer-spin-button,table.st input::-webkit-inner-spin-but
   <button data-t="duty">② 근무표</button>
   <button data-t="stat">③ 일일 통계</button>
   <button data-t="log">④ 간호일지</button>
-  <button data-t="sum">⑤ 월 합계</button>
+  <button data-t="sum">⑤ 합계(월·분기)</button>
 </div>
 
 <!-- ① 명단 -->
@@ -181,12 +187,24 @@ table.st input::-webkit-outer-spin-button,table.st input::-webkit-inner-spin-but
 <!-- ⑤ 월 합계 -->
 <section class="pane" id="p-sum">
   <div class="card">
+    <div class="row" style="margin-bottom:12px">
+      <div class="seg" id="sumMode"><button data-m="m">월별</button><button data-m="q">분기별</button><button data-m="y">연간</button></div>
+      <select id="qSel"><option value="1">1분기 (1~3월)</option><option value="2">2분기 (4~6월)</option><option value="3">3분기 (7~9월)</option><option value="4">4분기 (10~12월)</option></select>
+      <span class="muted" id="sumHint"></span>
+    </div>
     <h2 id="sumTitle">월 합계</h2>
+    <h3 class="sub">의사별 합계</h3>
     <div class="scroll"><table class="st" id="sumTbl"></table></div>
-    <h2 style="margin-top:14px">주취자 · 전송</h2>
-    <table class="st" id="sumDrunk" style="max-width:520px"></table>
-    <div class="row" style="margin-top:14px"><button class="pri" id="xlsBtn">엑셀로 내려받기 (합계 + 날짜별 시트)</button></div>
-    <p class="muted" style="margin:6px 0 0">기존 통계 파일과 같은 모양(합계 시트 + 1~31일 시트)으로 만들어져요.</p>
+    <div id="perMonth">
+      <h3 class="sub">월별 합계</h3>
+      <div class="scroll"><table class="st" id="sumMonthTbl"></table></div>
+      <h3 class="sub">의사별 · 월별 비교 <select id="cmpCat"></select></h3>
+      <div class="scroll"><table class="st" id="cmpTbl"></table></div>
+    </div>
+    <h3 class="sub">주취자 · 전송</h3>
+    <div class="scroll"><table class="st" id="sumDrunk"></table></div>
+    <div class="row" style="margin-top:14px"><button class="pri" id="xlsBtn">엑셀로 내려받기</button></div>
+    <p class="muted" style="margin:6px 0 0" id="xlsHint"></p>
   </div>
 </section>
 
@@ -406,28 +424,86 @@ $('#printOne').onclick=()=>doPrint([day]);
 $('#printAll').onclick=()=>doPrint(Array.from({length:dim()},(_,i)=>i+1));
 
 /* ---------- 월 합계 ---------- */
-function monthAgg(){
-  const n=dim(),doc={},etc=CATS.map(()=>0),drunk=[0,0,0];let send=0;
-  M.doctors.forEach(p=>doc[p.id]=CATS.map(()=>0));
-  for(let d=1;d<=n;d++){const s=M.stats[d];if(!s)continue;
-    M.doctors.forEach(p=>(s.doc&&s.doc[p.id]||[]).forEach((v,i)=>doc[p.id][i]+=num(v)));
-    (s.etc||[]).forEach((v,i)=>etc[i]+=num(v));(s.drunk||[]).forEach((v,i)=>drunk[i]+=num(v));send+=num(s.send)}
-  const tot=CATS.map((c,i)=>M.doctors.reduce((a,p)=>a+doc[p.id][i],0)+etc[i]);
-  return{doc,etc,tot,drunk,send};
+function monthAgg(k=ym){
+  const X=DB.months[k]||{doctors:[],stats:{}};const[y,m]=k.split('-').map(Number);
+  const n=new Date(y,m,0).getDate(),doc={},etc=CATS.map(()=>0),drunk=[0,0,0];let send=0,days=0;
+  X.doctors.forEach(p=>doc[p.id]=CATS.map(()=>0));
+  for(let d=1;d<=n;d++){const s=X.stats[d];if(!s)continue;
+    let any=num(s.send)>0;
+    X.doctors.forEach(p=>(s.doc&&s.doc[p.id]||[]).forEach((v,i)=>{doc[p.id][i]+=num(v);any=any||num(v)>0}));
+    (s.etc||[]).forEach((v,i)=>{etc[i]+=num(v);any=any||num(v)>0});(s.drunk||[]).forEach((v,i)=>{drunk[i]+=num(v);any=any||num(v)>0});send+=num(s.send);if(any)days++}
+  const tot=CATS.map((c,i)=>X.doctors.reduce((a,p)=>a+doc[p.id][i],0)+etc[i]);
+  return{doc,etc,tot,drunk,send,days,doctors:X.doctors,exists:!!DB.months[k]};
 }
+const dlbl=p=>`${p.code||''} ${(p.name||'').slice(0,1)}`.trim();
+const sm=a=>a.reduce((x,v)=>x+num(v),0);
+/* 기간 합계: 여러 달을 의사(코드+성 기준)별로 합침 */
+function periodAgg(keys){
+  const months=keys.map(k=>({k,m:+k.split('-')[1],A:monthAgg(k)}));
+  const docs=new Map();
+  months.forEach(({k,A})=>A.doctors.forEach(p=>{const l=dlbl(p)||'(이름 없음)';
+    if(!docs.has(l))docs.set(l,{label:l,tot:CATS.map(()=>0),by:{}});
+    const e=docs.get(l);const v=A.doc[p.id];v.forEach((x,i)=>e.tot[i]+=x);
+    e.by[k]=(e.by[k]||CATS.map(()=>0)).map((x,i)=>x+v[i])}));
+  const z=()=>CATS.map(()=>0);
+  const etc=z(),tot=z(),drunk=[0,0,0];let send=0;
+  months.forEach(({A})=>{A.etc.forEach((v,i)=>etc[i]+=v);A.tot.forEach((v,i)=>tot[i]+=v);A.drunk.forEach((v,i)=>drunk[i]+=v);send+=A.send});
+  return{months,docs:[...docs.values()],etc,tot,drunk,send};
+}
+let sumMode='m';
+function periodKeys(){
+  const[y,m]=ym.split('-').map(Number);
+  if(sumMode==='m')return[ym];
+  const ms=sumMode==='q'?[1,2,3].map(i=>(+$('#qSel').value-1)*3+i):Array.from({length:12},(_,i)=>i+1);
+  return ms.map(x=>`${y}-${String(x).padStart(2,'0')}`);
+}
+function periodTitle(){const y=ym.split('-')[0];return sumMode==='m'?`${y}년 ${+ym.split('-')[1]}월 총합`:sumMode==='q'?`${y}년 ${$('#qSel').value}분기 총합`:`${y}년 연간 총합`}
 function renderSum(){
-  const[y,m]=ym.split('-');const A=monthAgg();const sm=a=>a.reduce((x,y)=>x+y,0);
-  $('#sumTitle').textContent=`${y}년 ${+m}월 총합`;
-  let h='<tr><th></th>'+CATS.map(c=>`<th>${c}</th>`).join('')+'<th>계</th></tr>';
-  M.doctors.forEach(p=>h+=`<tr><td class="lb">${esc(p.code)} ${esc((p.name||'').slice(0,1))}</td>${A.doc[p.id].map(v=>`<td>${v}</td>`).join('')}<td>${sm(A.doc[p.id])}</td></tr>`);
-  h+=`<tr><td class="lb">기타</td>${A.etc.map(v=>`<td>${v}</td>`).join('')}<td>${sm(A.etc)}</td></tr>`;
-  h+=`<tr class="sum"><td class="lb">합계</td>${A.tot.map(v=>`<td>${v}</td>`).join('')}<td>${sm(A.tot)}</td></tr>`;
-  $('#sumTbl').innerHTML=h;
-  $('#sumDrunk').innerHTML=`<tr>${DCATS.map(c=>`<th>주취 ${c}</th>`).join('')}<th>주취 합계</th><th>전송 건수</th></tr><tr>${A.drunk.map(v=>`<td>${v}</td>`).join('')}<td>${sm(A.drunk)}</td><td>${A.send}</td></tr>`;
+  $$('#sumMode button').forEach(b=>b.classList.toggle('on',b.dataset.m===sumMode));
+  $('#qSel').style.display=sumMode==='q'?'':'none';
+  $('#perMonth').style.display=sumMode==='m'?'none':'';
+  $('#sumHint').textContent=sumMode==='m'?'위쪽 근무 월에서 달을 바꿀 수 있어요.':`연도는 위쪽 근무 월(${ym.split('-')[0]}년) 기준이에요.`;
+  $('#xlsHint').textContent=sumMode==='m'?'기존 통계 파일과 같은 모양(합계 시트 + 1~31일 시트)으로 만들어져요.':'의사별 합계 · 월별 합계 · 의사별 월별 · 주취자 시트로 만들어져요.';
+  const P=periodAgg(periodKeys());
+  $('#sumTitle').textContent=periodTitle();
+  const tr=(l,a,cls='')=>`<tr class="${cls}"><td class="lb">${l}</td>${a.map(v=>`<td>${v}</td>`).join('')}<td>${sm(a)}</td></tr>`;
+  const head='<tr><th></th>'+CATS.map(c=>`<th>${c}</th>`).join('')+'<th>계</th></tr>';
+  $('#sumTbl').innerHTML=head+P.docs.map(d=>tr(esc(d.label),d.tot)).join('')+tr('기타',P.etc)+tr('합계',P.tot,'sum');
+  const mlbl=x=>`${x.m}월`+(x.A.days?'':' <span class="muted">(입력 없음)</span>');
+  if(sumMode!=='m'){
+    $('#sumMonthTbl').innerHTML=head+P.months.map(x=>tr(mlbl(x),x.A.tot)).join('')+tr('합계',P.tot,'sum');
+    const cs=$('#cmpCat');if(!cs.options.length)cs.innerHTML=[...CATS,'계'].map((c,i)=>`<option value="${i}">${c}</option>`).join('');
+    const ci=+cs.value,pick=a=>a?(ci===CATS.length?sm(a):a[ci]):0;
+    $('#cmpTbl').innerHTML='<tr><th></th>'+P.months.map(x=>`<th>${x.m}월</th>`).join('')+'<th>합계</th></tr>'+
+      P.docs.map(d=>tr(esc(d.label),P.months.map(x=>pick(d.by[x.k])))).join('').replace(/<td>(\d+)<\/td><\/tr>/g,'<td><b>$1</b></td></tr>')+
+      tr('기타',P.months.map(x=>pick(x.A.etc)))+tr('합계',P.months.map(x=>pick(x.A.tot)),'sum');
+  }
+  const drow=(l,dr,send,cls='')=>`<tr class="${cls}"><td class="lb">${l}</td>${dr.map(v=>`<td>${v}</td>`).join('')}<td>${sm(dr)}</td><td>${send}</td></tr>`;
+  $('#sumDrunk').innerHTML=`<tr><th></th>${DCATS.map(c=>`<th>주취 ${c}</th>`).join('')}<th>주취 합계</th><th>전송 건수</th></tr>`+
+    (sumMode==='m'?drow(`${+ym.split('-')[1]}월`,P.drunk,P.send):P.months.map(x=>drow(mlbl(x),x.A.drunk,x.A.send)).join('')+drow('합계',P.drunk,P.send,'sum'));
+}
+$('#sumMode').onclick=e=>{const b=e.target.closest('button');if(!b)return;sumMode=b.dataset.m;
+  if(sumMode==='q'&&!$('#qSel').dataset.set)$('#qSel').value=Math.ceil(+ym.split('-')[1]/3);renderSum()};
+$('#qSel').onchange=()=>{$('#qSel').dataset.set=1;renderSum()};
+$('#cmpCat').onchange=renderSum;
+function xlsPeriod(){
+  const P=periodAgg(periodKeys()),wb=XLSX.utils.book_new(),t=periodTitle();
+  const add=(a,name,w)=>{const ws=XLSX.utils.aoa_to_sheet(a);ws['!cols']=[{wch:w||11},...Array(40).fill({wch:7})];XLSX.utils.book_append_sheet(wb,ws,name)};
+  const r=(l,a)=>[l,...a,sm(a)];
+  add([[t+' - 의사별'],[],['',...CATS,'계'],...P.docs.map(d=>r(d.label,d.tot)),r('기타',P.etc),r('합계',P.tot)],'의사별 합계');
+  add([[t+' - 월별'],[],['',...CATS,'계'],...P.months.map(x=>r(x.m+'월',x.A.tot)),r('합계',P.tot)],'월별 합계');
+  const h1=[''],h2=[''];P.months.forEach(x=>{h1.push(x.m+'월',...Array(CATS.length));h2.push(...CATS,'계')});
+  const row=(l,get)=>[l,...P.months.flatMap(x=>{const a=get(x)||CATS.map(()=>0);return[...a,sm(a)]})];
+  const ws=[[t+' - 의사별 월별'],[],h1,h2,...P.docs.map(d=>row(d.label,x=>d.by[x.k])),row('기타',x=>x.A.etc),row('합계',x=>x.A.tot)];
+  add(ws,'의사별 월별');
+  const dr=(l,d,s)=>[l,...d,sm(d),s];
+  add([[t+' - 주취자'],[],['',...DCATS,'합계','전송건수'],...P.months.map(x=>dr(x.m+'월',x.A.drunk,x.A.send)),dr('합계',P.drunk,P.send)],'주취자');
+  XLSX.writeFile(wb,`${t.replace(' 총합','')} 통계.xlsx`);
 }
 $('#xlsBtn').onclick=()=>{
   if(!window.XLSX){alert('엑셀 기능을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.');return}
-  const[y,m]=ym.split('-').map(Number);const wb=XLSX.utils.book_new();const sm=a=>a.reduce((x,v)=>x+num(v),0);
+  if(sumMode!=='m')return xlsPeriod();
+  const[y,m]=ym.split('-').map(Number);const wb=XLSX.utils.book_new();
   const lbl=p=>`${p.code} ${(p.name||'').slice(0,1)}`.trim();
   const build=(title,docRows,etc,tot,drunk,send,dateCols)=>{
     const a=[[],[title],dateCols[0],['',...CATS,'계','',...dateCols[1]]];
