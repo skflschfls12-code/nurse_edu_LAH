@@ -85,6 +85,23 @@ table.g td.c:hover{background:var(--line2)}
 .D{background:var(--sD)!important;color:var(--tD)}.E{background:var(--sE)!important;color:var(--tE)}.N{background:var(--sN)!important;color:var(--tN)}
 .S{background:var(--sS)!important;color:var(--tS)}.DN{background:var(--sDN)!important;color:var(--tDN)}
 td.c.sel{box-shadow:inset 0 0 0 2px var(--acc)}
+table.g td.c{position:relative}
+td.c.mod::after{content:"";position:absolute;top:3px;right:3px;width:6px;height:6px;border-radius:50%;background:#E8590C}
+.pop{position:fixed;z-index:50;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(16,24,40,.16);padding:8px;display:none}
+.pop .ttl{font-size:.78rem;color:var(--sub);margin:0 2px 6px;white-space:nowrap}
+.pop .opts{display:flex;gap:4px}
+.pop .opts button{width:38px;height:34px;border:1px solid var(--line);border-radius:7px;font-weight:700;cursor:pointer;background:#fff}
+.pop .opts button.cur{box-shadow:0 0 0 2px var(--acc)}
+.pop .opts button.clr{width:auto;padding:0 10px;font-weight:600;color:var(--sub)}
+.sw{display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:center;font-size:.88rem}
+.sw select{width:100%}
+.swv{display:flex;align-items:center;gap:8px;justify-content:center;padding:12px;background:#FAFBFC;border-radius:8px;margin:12px 0;font-size:.9rem;flex-wrap:wrap}
+.swv .k{display:inline-block;min-width:30px;text-align:center;border-radius:5px;font-weight:700;padding:1px 6px;background:var(--line2)}
+.chg{list-style:none;margin:0;padding:0;max-height:300px;overflow:auto}
+.chg li{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--line2);font-size:.86rem}
+.chg li .k{display:inline-block;min-width:26px;text-align:center;border-radius:5px;font-weight:700;padding:0 5px;background:var(--line2);font-size:.8rem}
+.chg li .tag{font-size:.72rem;color:var(--acc);background:var(--accs);border-radius:5px;padding:0 5px}
+.chg li .tm{color:var(--faint);font-size:.75rem}
 .legend{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:.8rem;color:var(--sub)}
 .legend span.k{display:inline-block;min-width:28px;text-align:center;border-radius:5px;font-weight:700;padding:1px 6px}
 
@@ -215,10 +232,29 @@ footer{max-width:1040px;margin:0 auto;padding:0 16px 40px;display:flex;gap:8px;a
   </div>
   <div class="card">
     <h2>이번 달 근무표 <span class="sp"></span><button class="btn sm ghost" id="dutyClear">전체 지우기</button></h2>
-    <p class="desc">칸을 누르면 바뀌어요. 간호사 빈칸 → D → E → N → S, 의사 빈칸 → D → N → DN. 칸을 고른 뒤 키보드 D·E·N·S, Delete, 방향키도 돼요.</p>
+    <p class="desc">칸을 누르면 근무를 고를 수 있어요. 칸을 고른 뒤 키보드 D·E·N·S, Delete, 방향키도 돼요. 엑셀을 올린 뒤 직접 고친 칸에는 <span style="color:#E8590C">●</span> 점이 찍혀요.</p>
     <div class="legend" style="margin-bottom:10px"><span class="k D">D</span><span class="k E">E</span><span class="k N">N</span><span class="k S">S</span>헤드널스 · 일지 D칸 맨 앞에 "이름(S)"<span class="k DN" style="margin-left:6px">DN</span>의사 24시간</div>
     <div class="scroll"><table class="g" id="dutyTbl"></table></div>
   </div>
+  <div class="cols">
+    <div class="card">
+      <h2>근무 바꾸기 (맞교대)</h2>
+      <p class="desc">같은 날 두 사람의 근무를 서로 맞바꿔요. 다른 날끼리 바꾼 경우는 날짜마다 한 번씩 하면 돼요.</p>
+      <div class="sw">
+        <span>날짜</span><select id="swD"></select>
+        <span>근무자 1</span><select id="swA"></select>
+        <span>근무자 2</span><select id="swB"></select>
+      </div>
+      <div class="swv" id="swView"></div>
+      <button class="btn pri" id="swBtn">서로 바꾸기</button>
+    </div>
+    <div class="card">
+      <h2>변경 내역 <span class="sp"></span><button class="btn sm ghost" id="chgClear">내역 지우기</button></h2>
+      <p class="desc">엑셀을 올린 뒤 직접 고친 근무가 남아요. 잘못 고쳤으면 되돌리기를 누르세요.</p>
+      <ul class="chg" id="chgList"></ul>
+    </div>
+  </div>
+  <div class="pop" id="pop"><div class="ttl" id="popTtl"></div><div class="opts" id="popOpts"></div></div>
 </section>
 
 <!-- 통계 -->
@@ -354,7 +390,7 @@ function staffEvt(e){
   if(b.hasAttribute('data-del')){
     if(!confirm(`'${arr[i].name||arr[i].code}'을(를) 명단에서 지울까요? 이번 달 근무표·통계의 해당 기록도 지워져요.`))return;
     const id=arr[i].id;arr.splice(i,1);delete M.duty[id];
-    Object.values(M.stats).forEach(s=>s.doc&&delete s.doc[id]);
+    Object.values(M.stats).forEach(s=>s.doc&&delete s.doc[id]);if(M.mod)delete M.mod[id];if(M.chg)M.chg=M.chg.filter(c=>c.p!==id);
   }else if(b.dataset.mv){
     const j=i+ +b.dataset.mv;if(j<0||j>=arr.length)return;[arr[i],arr[j]]=[arr[j],arr[i]];
   }else return;
@@ -384,23 +420,107 @@ function renderDuty(){
     if(!arr.length)return g+`<tr><td class="nm muted" style="font-weight:400">명단 없음</td><td colspan="${n}" class="muted" style="text-align:left;padding:6px 10px">엑셀 근무표를 올리거나 근무자 명단에서 추가하세요.</td></tr>`;
     return g+arr.map(p=>{
       let r=`<tr><td class="nm">${esc(k==='d'&&p.code?p.code+' ':'')}${esc(p.name)}</td>`;
-      for(let d=1;d<=n;d++){const v=(M.duty[p.id]||{})[d]||'';r+=`<td class="c ${v}" data-p="${p.id}" data-k="${k}" data-d="${d}">${v}</td>`}
+      for(let d=1;d<=n;d++){const v=(M.duty[p.id]||{})[d]||'';r+=`<td class="c ${v}${isMod(p.id,d)?' mod':''}" data-p="${p.id}" data-k="${k}" data-d="${d}">${v}</td>`}
       return r+'</tr>'}).join('');
   };
   $('#dutyTbl').innerHTML=h+rows(M.nurses,'n','간호사')+rows(M.doctors,'d','의사')+'</tbody>';
   if(selCell){const c=$(`#dutyTbl td.c[data-p="${selCell.p}"][data-d="${selCell.d}"]`);c&&c.classList.add('sel')}
+  renderSwap();renderChg();
 }
 function setDuty(p,d,v){(M.duty[p]=M.duty[p]||{});if(v)M.duty[p][d]=v;else delete M.duty[p][d]}
-function paintCell(td){const v=(M.duty[td.dataset.p]||{})[td.dataset.d]||'';td.className='c '+v+(selCell&&selCell.p===td.dataset.p&&+selCell.d===+td.dataset.d?' sel':'');td.textContent=v}
+const getDuty=(p,d)=>(M.duty[p]||{})[d]||'';
+const isMod=(p,d)=>!!((M.mod||{})[p]||{})[d];
+const person=id=>M.nurses.find(x=>x.id===id)||M.doctors.find(x=>x.id===id);
+const kindOf=id=>M.nurses.some(x=>x.id===id)?'n':'d';
+/* 손으로 고친 근무: 내역에 남기고 칸에 표시 */
+function editDuty(p,d,v,note){
+  const cur=getDuty(p,d);if(cur===v)return;
+  setDuty(p,d,v);
+  M.mod=M.mod||{};(M.mod[p]=M.mod[p]||{})[d]=1;
+  (M.chg=M.chg||[]).unshift({t:Date.now(),p,d:+d,from:cur,to:v,note:note||''});
+}
+function paintCell(td){const p=td.dataset.p,d=td.dataset.d,v=getDuty(p,d);td.className='c '+v+(isMod(p,d)?' mod':'')+(selCell&&selCell.p===p&&+selCell.d===+d?' sel':'');td.textContent=v}
+function afterEdit(){save();renderSwap();renderChg()}
+const pop=$('#pop');
+function closePop(){pop.style.display='none'}
 $('#dutyTbl').addEventListener('click',e=>{
-  const td=e.target.closest('td.c');if(!td)return;
+  const td=e.target.closest('td.c');if(!td)return;e.stopPropagation();
   const prev=$('#dutyTbl td.sel');prev&&prev.classList.remove('sel');
-  selCell={p:td.dataset.p,d:+td.dataset.d,k:td.dataset.k};
-  const cyc=td.dataset.k==='n'?NCYC:DCYC;const cur=(M.duty[td.dataset.p]||{})[td.dataset.d]||'';
-  setDuty(td.dataset.p,td.dataset.d,cyc[(cyc.indexOf(cur)+1)%cyc.length]);save();paintCell(td);
+  selCell={p:td.dataset.p,d:+td.dataset.d,k:td.dataset.k};td.classList.add('sel');
+  const cur=getDuty(td.dataset.p,td.dataset.d),opts=td.dataset.k==='n'?['D','E','N','S']:['D','N','DN'];
+  const ps=person(td.dataset.p);
+  $('#popTtl').textContent=`${ps?ps.name:''} · ${+ym.split('-')[1]}/${td.dataset.d}(${WD[wd(+td.dataset.d)]})`;
+  $('#popOpts').innerHTML=opts.map(o=>`<button class="${o}${o===cur?' cur':''}" data-v="${o}">${o}</button>`).join('')+`<button class="clr${cur===''?' cur':''}" data-v="">비우기</button>`;
+  pop.style.display='block';
+  const r=td.getBoundingClientRect(),w=pop.offsetWidth,h=pop.offsetHeight;
+  let x=r.left+r.width/2-w/2,y=r.bottom+6;
+  x=Math.max(8,Math.min(x,innerWidth-w-8));if(y+h>innerHeight-8)y=r.top-h-6;
+  pop.style.left=x+'px';pop.style.top=y+'px';
 });
+pop.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b||!selCell)return;e.stopPropagation();
+  editDuty(selCell.p,selCell.d,b.dataset.v);closePop();
+  const td=$(`#dutyTbl td.c[data-p="${selCell.p}"][data-d="${selCell.d}"]`);td&&paintCell(td);afterEdit();
+});
+document.addEventListener('click',e=>{if(!pop.contains(e.target))closePop()});
+addEventListener('scroll',closePop,true);addEventListener('resize',closePop);
+
+/* 맞교대 */
+function renderSwap(){
+  const n=dim(),mm=+ym.split('-')[1];
+  const dSel=$('#swD'),a=$('#swA'),b=$('#swB');
+  const keep={d:dSel.value||day,a:a.value,b:b.value};
+  dSel.innerHTML=Array.from({length:n},(_,i)=>`<option value="${i+1}">${mm}월 ${i+1}일 (${WD[wd(i+1)]})</option>`).join('');
+  dSel.value=Math.min(+keep.d,n);
+  const d=+dSel.value;
+  const opt=p=>{const v=getDuty(p.id,d);return `<option value="${p.id}">${esc(p.name)}${v?' — '+v:''}</option>`};
+  const html=(M.nurses.length?`<optgroup label="간호사">${M.nurses.map(opt).join('')}</optgroup>`:'')+(M.doctors.length?`<optgroup label="의사">${M.doctors.map(opt).join('')}</optgroup>`:'');
+  a.innerHTML='<option value="">선택</option>'+html;b.innerHTML='<option value="">선택</option>'+html;
+  if(person(keep.a))a.value=keep.a;if(person(keep.b))b.value=keep.b;
+  const pa=person(a.value),pb=person(b.value);
+  const k=v=>`<span class="k ${v}">${v||'휴'}</span>`;
+  let msg='';
+  if(pa&&pb&&pa!==pb){
+    const va=getDuty(pa.id,d),vb=getDuty(pb.id,d);
+    msg=`<b>${esc(pa.name)}</b> ${k(va)} <span>⇄</span> ${k(vb)} <b>${esc(pb.name)}</b>`;
+    if(kindOf(pa.id)!==kindOf(pb.id))msg+=`<span class="warn" style="width:100%;text-align:center;font-size:.8rem">간호사와 의사는 바꿀 수 없어요</span>`;
+    else if(va===vb)msg+=`<span class="muted" style="width:100%;text-align:center">두 사람 근무가 같아요</span>`;
+  }else msg='<span class="muted">날짜와 두 사람을 고르세요</span>';
+  $('#swView').innerHTML=msg;
+  $('#swBtn').disabled=!(pa&&pb&&pa!==pb&&kindOf(pa.id)===kindOf(pb.id)&&getDuty(pa.id,d)!==getDuty(pb.id,d));
+}
+['#swD','#swA','#swB'].forEach(s=>$(s).addEventListener('change',renderSwap));
+$('#swBtn').onclick=()=>{
+  const d=+$('#swD').value,a=$('#swA').value,b=$('#swB').value;const va=getDuty(a,d),vb=getDuty(b,d);
+  const na=person(a).name,nb=person(b).name;
+  editDuty(a,d,vb,`${nb}와 맞교대`);editDuty(b,d,va,`${na}와 맞교대`);
+  save();renderDuty();
+};
+
+/* 변경 내역 */
+function renderChg(){
+  const mm=+ym.split('-')[1];const list=(M.chg||[]).filter(c=>person(c.p));
+  const k=v=>`<span class="k ${v}">${v||'휴'}</span>`;
+  $('#chgList').innerHTML=list.length?list.map(c=>{const i=M.chg.indexOf(c);
+    return `<li><span style="min-width:62px">${mm}/${c.d}(${WD[wd(c.d)]})</span><b>${esc(person(c.p).name)}</b>${k(c.from)}→${k(c.to)}${c.note?`<span class="tag">${esc(c.note)}</span>`:''}<span class="sp"></span><span class="tm">${new Date(c.t).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'})}</span><button class="btn sm ghost" data-undo="${i}">되돌리기</button></li>`}).join('')
+    :'<li class="muted" style="border:0">아직 고친 근무가 없어요.</li>';
+}
+$('#chgList').addEventListener('click',e=>{
+  const b=e.target.closest('[data-undo]');if(!b)return;
+  const c=M.chg[+b.dataset.undo];if(!c)return;
+  // 맞교대는 짝도 같이 되돌림
+  const pair=c.note&&c.note.endsWith('맞교대')?M.chg.find(x=>x!==c&&x.t===c.t&&x.d===c.d):null;
+  [c,pair].filter(Boolean).forEach(x=>{
+    setDuty(x.p,x.d,x.from);M.chg.splice(M.chg.indexOf(x),1);
+    if(!M.chg.some(y=>y.p===x.p&&y.d===x.d)&&M.mod&&M.mod[x.p])delete M.mod[x.p][x.d];
+  });
+  save();renderDuty();
+});
+$('#chgClear').onclick=()=>{if(!(M.chg||[]).length)return;if(confirm('변경 내역을 지울까요? 근무표는 지금 상태 그대로 남고, 고친 칸 표시(●)만 없어져요.')){M.chg=[];M.mod={};save();renderDuty()}};
 document.addEventListener('keydown',e=>{
   if(tab!=='duty'||!selCell||/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;
+  if(e.key==='Escape'){closePop();return}
+  closePop();
   const td=$(`#dutyTbl td.c[data-p="${selCell.p}"][data-d="${selCell.d}"]`);if(!td)return;
   const k=e.key.toUpperCase();
   const mv=(dr,dc)=>{const all=$$('#dutyTbl tr').filter(r=>r.querySelector('td.c'));const ri=all.indexOf(td.parentElement);
@@ -409,12 +529,12 @@ document.addEventListener('keydown',e=>{
   const ok=td.dataset.k==='n'?['D','E','N','S']:['D','N'];
   if(ok.includes(k)){let v=k;const cur=(M.duty[selCell.p]||{})[selCell.d]||'';
     if(td.dataset.k==='d'&&((cur==='D'&&k==='N')||(cur==='N'&&k==='D')))v='DN';
-    setDuty(selCell.p,selCell.d,v);save();paintCell(td);e.preventDefault();mv(0,1)}
-  else if(k==='DELETE'||k==='BACKSPACE'||k===' '||k==='O'){setDuty(selCell.p,selCell.d,'');save();paintCell(td);e.preventDefault();if(k!=='BACKSPACE')mv(0,1)}
+    editDuty(selCell.p,selCell.d,v);paintCell(td);afterEdit();e.preventDefault();mv(0,1)}
+  else if(k==='DELETE'||k==='BACKSPACE'||k===' '||k==='O'){editDuty(selCell.p,selCell.d,'');paintCell(td);afterEdit();e.preventDefault();if(k!=='BACKSPACE')mv(0,1)}
   else if(e.key==='ArrowRight'){mv(0,1);e.preventDefault()}else if(e.key==='ArrowLeft'){mv(0,-1);e.preventDefault()}
   else if(e.key==='ArrowDown'){mv(1,0);e.preventDefault()}else if(e.key==='ArrowUp'){mv(-1,0);e.preventDefault()}
 });
-$('#dutyClear').onclick=()=>{if(confirm('이번 달 근무표를 모두 지울까요?')){M.duty={};save();renderAll()}};
+$('#dutyClear').onclick=()=>{if(confirm('이번 달 근무표를 모두 지울까요?')){M.duty={};M.mod={};M.chg=[];save();renderAll()}};
 
 /* 근무 코드 정리 */
 function normCode(v,kind){
@@ -436,12 +556,14 @@ function findPerson(kind,raw){
   const d=parseDoc(raw);
   return M.doctors.find(x=>(d.code&&x.code===d.code)||(d.name&&x.name===d.name)||(x.code&&raw===x.code));
 }
-function applyRows(rows){ // rows: [{kind,raw,codes:[day1..]}]
-  let added=0;const n=dim();
+const modCount=()=>Object.entries(M.mod||{}).reduce((a,[p,o])=>a+(person(p)?Object.keys(o).length:0),0);
+function applyRows(rows,keepMod){ // rows: [{kind,raw,codes:[day1..]}]
+  let added=0;const n=dim();M.mod=M.mod||{};M.chg=M.chg||[];
   rows.forEach(r=>{
     let p=findPerson(r.kind,r.raw);
     if(!p){p=r.kind==='n'?{id:uid(),name:r.raw}:{id:uid(),...parseDoc(r.raw)};(r.kind==='n'?M.nurses:M.doctors).push(p);added++}
-    for(let d=1;d<=n;d++)setDuty(p.id,d,normCode(r.codes[d-1],r.kind));
+    for(let d=1;d<=n;d++){if(keepMod&&isMod(p.id,d))continue;setDuty(p.id,d,normCode(r.codes[d-1],r.kind))}
+    if(!keepMod){delete M.mod[p.id];M.chg=M.chg.filter(c=>c.p!==p.id)}
   });
   save();renderAll();return added;
 }
@@ -449,7 +571,7 @@ $('#dutyPasteBtn').onclick=()=>{
   const kind=$('#pasteKind').value;
   const rows=$('#dutyPaste').value.split(/\r?\n/).map(l=>l.split('\t')).filter(c=>c[0]&&c[0].trim()).map(c=>({kind,raw:c[0].trim(),codes:c.slice(1)}));
   if(!rows.length)return;
-  const added=applyRows(rows);$('#dutyPaste').value='';
+  const added=applyRows(rows,true);$('#dutyPaste').value='';
   alert(`${rows.length}명 근무표를 적용했어요.`+(added?` (새로 추가된 이름 ${added}명 — 명단을 확인하세요)`:''));
 };
 
@@ -519,17 +641,19 @@ function showDutyPreview(sheet,fname){
     return `<tr><td><input type="checkbox" data-use="${i}" ${r.use?'checked':''}></td><td><b>${esc(r.raw)}</b></td>
       <td><select data-kind="${i}"><option value="n" ${r.kind==='n'?'selected':''}>간호사</option><option value="d" ${r.kind==='d'?'selected':''}>의사</option></select></td>
       <td>${c.filter(Boolean).length}</td><td class="codes">${c.slice(0,14).map(v=>v||'·').join(' ')}${pv.len>14?' …':''}</td></tr>`}).join('')+'</table></div>';
+  const mc=modCount();
+  if(mc)h+=`<label class="row" style="margin-top:10px;font-size:.88rem;gap:6px"><input type="checkbox" id="pvKeep" checked> 직접 고친 칸(${mc}칸, ● 표시)은 그대로 두기</label>`;
   h+=`<div class="row" style="margin-top:10px"><button class="btn pri" id="pvApply">${+ym.split('-')[1]}월 근무표에 적용</button><button class="btn ghost" id="pvCancel">취소</button></div>`;
   $('#dutyPrev').innerHTML=h;bindPv(fname);
 }
 function bindPv(fname){
   const s=$('#pvSheet');if(s)s.onchange=()=>showDutyPreview(s.value,fname);
   const box=$('#dutyPrev');
-  box.onchange=e=>{const t=e.target;if(!pv)return;
+  box.onchange=e=>{const t=e.target;if(!pv||t.id==='pvKeep')return;
     if(t.dataset.use)pv.rows[+t.dataset.use].use=t.checked;
     if(t.dataset.kind){pv.rows[+t.dataset.kind].kind=t.value;showDutyPreview($('#pvSheet')?$('#pvSheet').value:xlsWB.SheetNames[0],fname)}};
   const a=$('#pvApply');if(a)a.onclick=()=>{
-    const rows=pv.rows.filter(r=>r.use);const added=applyRows(rows);
+    const rows=pv.rows.filter(r=>r.use);const added=applyRows(rows,$('#pvKeep')?$('#pvKeep').checked:false);
     $('#dutyPrev').innerHTML=`<p class="muted">✓ ${rows.length}명 근무표를 적용했어요.${added?` 새 이름 ${added}명이 명단에 추가됐어요.`:''}</p>`;pv=null};
   const c=$('#pvCancel');if(c)c.onclick=()=>{$('#dutyPrev').innerHTML='';pv=null};
 }
