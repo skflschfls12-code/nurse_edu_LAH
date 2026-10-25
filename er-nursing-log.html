@@ -113,6 +113,9 @@ td.c.mod::after{content:"";position:absolute;top:3px;right:3px;width:6px;height:
 .drop b{display:block;font-size:.95rem;margin-bottom:2px}
 .drop span{display:block}
 .prev{margin-top:12px}
+.paste{display:block;margin-top:8px;border:1.5px dashed #C9CFD8;border-radius:10px;padding:14px;text-align:center;background:#FAFBFC;cursor:text;outline:none;caret-color:transparent;max-height:120px;overflow:hidden}
+.paste:focus{border-color:var(--acc);background:var(--accs)}
+.paste b{display:block;font-size:.92rem}.paste span{display:block}
 table.pv{border-collapse:collapse;font-size:.82rem;width:100%}
 table.pv th,table.pv td{border-bottom:1px solid var(--line2);padding:5px 8px;text-align:left;white-space:nowrap}
 table.pv th{color:var(--sub);font-weight:600;background:#FAFBFC}
@@ -202,14 +205,14 @@ footer{max-width:1040px;margin:0 auto;padding:0 16px 40px;display:flex;gap:8px;a
     </div>
     <div class="card">
       <h2>의사</h2>
-      <p class="desc">코드(er16)와 이름. 통계에는 "er16 하", 일지에는 이름으로 나와요.</p>
+      <p class="desc"><b>코드 · 이름 · 호칭</b>을 적어요. 호칭은 근무표에 적힌 이름(예: <b>Dr호</b>)이에요. 근무표의 Dr호가 이 의사로 연결되고, 통계에는 <b>er16 호</b>처럼 나와요.</p>
       <div class="list" id="docList"></div>
       <button class="btn sm" id="addDoc">+ 의사 추가</button>
     </div>
   </div>
   <div class="card">
     <h2>여러 명 한 번에 추가</h2>
-    <p class="desc">한 줄에 한 명씩 붙여넣으세요. 의사는 <code>er16 하길동</code>처럼 코드와 이름을 띄어 쓰면 돼요. 엑셀 근무표를 올리면 명단도 같이 채워져요.</p>
+    <p class="desc">한 줄에 한 명씩 붙여넣으세요. 의사는 <code>er16 김호땡 Dr호</code>처럼 코드 · 이름 · 호칭을 띄어 쓰면 돼요(호칭은 빼도 돼요). 엑셀 근무표를 올리면 명단도 같이 채워져요.</p>
     <textarea id="bulkNames" placeholder="홍길동&#10;김간호&#10;이간호"></textarea>
     <div class="row" style="margin-top:8px"><button class="btn sm" id="bulkNurse">간호사로 추가</button><button class="btn sm" id="bulkDoc">의사로 추가</button></div>
   </div>
@@ -218,10 +221,11 @@ footer{max-width:1040px;margin:0 auto;padding:0 16px 40px;display:flex;gap:8px;a
 <!-- 근무표 -->
 <section class="pane" id="p-duty">
   <div class="card">
-    <h2>엑셀 근무표 올리기</h2>
-    <p class="desc">쓰던 근무표 엑셀 파일(.xlsx, .xls)을 그대로 올리세요. 날짜(1, 2, 3…) 줄과 이름 칸을 자동으로 찾아요.</p>
+    <h2>근무표 가져오기</h2>
+    <p class="desc">엑셀 파일을 올리거나, 한글·엑셀에서 표를 복사해 붙여넣으세요. 날짜 줄과 이름(또는 Dr호 같은 호칭)을 자동으로 찾아요.</p>
     <label class="drop" id="drop"><input type="file" id="dutyFile" accept=".xlsx,.xls,.xlsm,.csv" hidden>
       <b>파일을 끌어다 놓거나 눌러서 선택</b><span class="muted">D · E · N · S · DN 외의 글자(Off, 휴 등)는 빈칸으로 처리돼요</span></label>
+    <div class="paste" id="pasteZone" contenteditable="true" spellcheck="false"><b>한글(HWP) 표 붙여넣기</b><span class="muted">한글에서 근무표 표를 블록 지정 → Ctrl+C → 여기를 누르고 Ctrl+V</span></div>
     <div class="prev" id="dutyPrev"></div>
     <details>
       <summary>엑셀에서 복사해 붙여넣기</summary>
@@ -477,12 +481,14 @@ function renderStaff(){
     <input type="text" value="${esc(n.name)}" data-f="name" placeholder="이름">${ctl}</div>`).join('')||'<div class="empty">아직 없어요.</div>';
   $('#docList').innerHTML=M.doctors.map((n,i)=>`<div class="it" data-k="doctors" data-i="${i}"><span class="no">${i+1}</span>
     <input type="text" class="code" value="${esc(n.code)}" data-f="code" placeholder="er16">
-    <input type="text" value="${esc(n.name)}" data-f="name" placeholder="이름">${ctl}</div>`).join('')||'<div class="empty">아직 없어요.</div>';
+    <input type="text" value="${esc(n.name)}" data-f="name" placeholder="이름 (김호땡)">
+    <input type="text" class="code" value="${esc(n.nick||'')}" data-f="nick" placeholder="Dr호" title="근무표에 적힌 호칭">
+    <span class="muted lbl" style="min-width:58px;white-space:nowrap">→ ${esc(dlbl(n))}</span>${ctl}</div>`).join('')||'<div class="empty">아직 없어요.</div>';
 }
 function staffEvt(e){
   const it=e.target.closest('.it');if(!it)return;
   const arr=M[it.dataset.k],i=+it.dataset.i;
-  if(e.type==='input'&&e.target.dataset.f){arr[i][e.target.dataset.f]=e.target.value.trim();save();return}
+  if(e.type==='input'&&e.target.dataset.f){arr[i][e.target.dataset.f]=e.target.value.trim();const l=it.querySelector('.lbl');if(l)l.textContent='→ '+dlbl(arr[i]);save();return}
   if(e.type!=='click')return;
   const b=e.target.closest('button');if(!b)return;
   if(b.hasAttribute('data-del')){
@@ -496,12 +502,22 @@ function staffEvt(e){
 }
 ['#nurseList','#docList'].forEach(s=>{$(s).addEventListener('click',staffEvt);$(s).addEventListener('input',staffEvt)});
 $('#addNurse').onclick=()=>{M.nurses.push({id:uid(),name:''});save();renderStaff();$('#nurseList .it:last-child input').focus()};
-$('#addDoc').onclick=()=>{M.doctors.push({id:uid(),code:'',name:''});save();renderStaff();$('#docList .it:last-child input').focus()};
-function parseDoc(s){const m=String(s).trim().match(/^([A-Za-z]+\s?\d+)\s*(.*)$/);return m?{code:m[1].replace(/\s/g,''),name:m[2].trim()}:{code:'',name:String(s).trim()}}
+$('#addDoc').onclick=()=>{M.doctors.push({id:uid(),code:'',name:'',nick:''});save();renderStaff();$('#docList .it:last-child input').focus()};
+/* 의사: "er16 김호땡 Dr호" / "Dr호" / "김호땡" 모두 받아요 */
+const isNick=v=>/^dr\.?\s*[가-힣A-Za-z]/i.test(String(v||'').trim());
+function parseDoc(s){
+  let t=String(s).trim(),code='',nick='';
+  const m=t.match(/^([A-Za-z]+\s?\d+)\s*(.*)$/);if(m){code=m[1].replace(/\s/g,'');t=m[2].trim()}
+  const n=t.match(/(?:^|\s)(dr\.?\s*[가-힣A-Za-z]+)$/i);if(n){nick=n[1].replace(/\s/g,'');t=t.slice(0,n.index).trim()}
+  return{code,name:t,nick};
+}
+const nickCore=p=>String(p.nick||'').replace(/^dr\.?\s*/i,'').trim();
+const dName=p=>p.name||p.nick||p.code||'';
+const dlbl=p=>`${p.code||''} ${nickCore(p)||(p.name||'').slice(0,1)}`.trim();
 function bulk(kind){
   const names=$('#bulkNames').value.split(/[\n,]/).map(s=>s.trim()).filter(Boolean);
   names.forEach(s=>{if(kind==='n'){if(!M.nurses.some(x=>x.name===s))M.nurses.push({id:uid(),name:s})}
-    else{const d=parseDoc(s);if(!M.doctors.some(x=>x.name===d.name&&x.code===d.code))M.doctors.push({id:uid(),...d})}});
+    else{const d=parseDoc(s);if(!M.doctors.some(x=>x.name===d.name&&x.code===d.code&&(x.nick||'')===d.nick))M.doctors.push({id:uid(),...d})}});
   $('#bulkNames').value='';save();renderAll();
 }
 $('#bulkNurse').onclick=()=>bulk('n');$('#bulkDoc').onclick=()=>bulk('d');
@@ -649,17 +665,26 @@ function normCode(v,kind){
   if(/^(D|N)[0-9'’*]?$/.test(s))return s[0];
   return'';
 }
+const nkey=v=>String(v??'').replace(/\s/g,'').toLowerCase();
+const nkeyCore=v=>nkey(v).replace(/^dr\.?/,'');
 function findPerson(kind,raw){
-  if(kind==='n')return M.nurses.find(x=>x.name===raw);
-  const d=parseDoc(raw);
-  return M.doctors.find(x=>(d.code&&x.code===d.code)||(d.name&&x.name===d.name)||(x.code&&raw===x.code));
+  if(kind==='n'){const k=nkey(raw);return M.nurses.find(x=>nkey(x.name)===k)}
+  const d=parseDoc(raw),k=nkey(raw),kc=nkeyCore(raw);
+  const hit=M.doctors.find(x=>(x.nick&&(nkey(x.nick)===k||nkeyCore(x.nick)===kc))||(d.code&&x.code===d.code)||(x.name&&nkey(x.name)===k)||(d.name&&x.name===d.name)||(x.code&&nkey(x.code)===k));
+  if(hit)return hit;
+  // "Dr호" 인데 호칭을 아직 안 정했으면 통계 글자(er16 호)로 한 명만 맞을 때 연결
+  if(isNick(raw)){const c=M.doctors.filter(x=>nkeyCore(nickCore(x)||(x.name||'').slice(0,1))===kc);if(c.length===1)return c[0]}
+  return undefined;
 }
 const modCount=()=>Object.entries(M.mod||{}).reduce((a,[p,o])=>a+(person(p)?Object.keys(o).length:0),0);
 function applyRows(rows,keepMod){ // rows: [{kind,raw,codes:[day1..]}]
   let added=0;const n=dim();M.mod=M.mod||{};M.chg=M.chg||[];
   rows.forEach(r=>{
-    let p=findPerson(r.kind,r.raw);
-    if(!p){p=r.kind==='n'?{id:uid(),name:r.raw}:{id:uid(),...parseDoc(r.raw)};(r.kind==='n'?M.nurses:M.doctors).push(p);added++}
+    let p=r.target?person(r.target):findPerson(r.kind,r.raw);
+    if(p&&kindOf(p.id)!==r.kind)p=null;
+    if(!p){p=r.kind==='n'?{id:uid(),name:r.raw}:{id:uid(),...parseDoc(r.raw)};if(r.kind==='d'&&isNick(r.raw)&&!p.nick){p.nick=p.name;p.name=''}
+      (r.kind==='n'?M.nurses:M.doctors).push(p);added++}
+    else if(r.kind==='d'&&isNick(r.raw)&&!p.nick)p.nick=r.raw.replace(/\s/g,''); // 연결한 호칭 기억
     for(let d=1;d<=n;d++){if(keepMod&&isMod(p.id,d))continue;setDuty(p.id,d,normCode(r.codes[d-1],r.kind))}
     if(!keepMod){delete M.mod[p.id];M.chg=M.chg.filter(c=>c.p!==p.id)}
   });
@@ -673,16 +698,21 @@ $('#dutyPasteBtn').onclick=()=>{
   alert(`${rows.length}명 근무표를 적용했어요.`+(added?` (새로 추가된 이름 ${added}명 — 명단을 확인하세요)`:''));
 };
 
-/* 엑셀 근무표 읽기 */
-let xlsWB=null;
+/* 근무표 읽기 (엑셀 파일 · 한글/엑셀 표 붙여넣기) */
+// 날짜 칸: 1, "1일", "12/1", "12.1(월)", "12월 1일", 날짜값
 const dayNum=v=>{
   if(v instanceof Date)return v.getDate();
   if(typeof v==='number')return Number.isInteger(v)&&v>=1&&v<=31?v:null;
-  const m=String(v??'').trim().match(/^(\d{1,2})\s*일?$/)||String(v??'').trim().match(/^\d{1,2}\s*[\/.]\s*(\d{1,2})\.?$/);
-  return m?+m[1]:null;
+  const t=String(v??'').trim().replace(/\s*\(.\)\s*$/,'').replace(/\s*[일월화수목금토]요일$/,'');
+  let m=t.match(/^(\d{1,2})\s*일?$/);if(m&&+m[1]>=1&&+m[1]<=31)return+m[1];
+  m=t.match(/^\d{1,2}\s*[\/.월-]\s*(\d{1,2})\s*[일.]?$/);if(m&&+m[1]>=1&&+m[1]<=31)return+m[1];
+  return null;
 };
-function detectSheet(aoa){
-  // 1,2,3… 이 연속으로 이어지는 줄 = 날짜 줄
+const cellStr=v=>v instanceof Date?'':String(v??'').trim();
+const looksName=v=>/^([A-Za-z]+\s?\d+\s*)?[가-힣]{2,5}$/.test(v)||/^[A-Za-z]+\s?\d+$/.test(v)||isNick(v);
+function detectAoa(aoa){return detectPersonRows(aoa)||detectDateRows(aoa)}
+// ① 사람 줄 × 날짜 칸 (1,2,3…이 가로로 이어짐)
+function detectPersonRows(aoa){
   for(let r=0;r<Math.min(aoa.length,40);r++){
     const row=aoa[r]||[];
     for(let c=0;c<row.length;c++){
@@ -696,63 +726,126 @@ function detectSheet(aoa){
 function guessNameCol(aoa,hr,dc,len){
   let best=-1,bs=0;
   for(let c=0;c<dc;c++){
-    let s=0;for(let r=hr+1;r<aoa.length;r++){const v=String((aoa[r]||[])[c]??'').trim();if(/^([A-Za-z]+\s?\d+\s*)?[가-힣]{2,5}$/.test(v)||/^[A-Za-z]+\s?\d+$/.test(v))s++}
+    let s=0;for(let r=hr+1;r<aoa.length;r++)if(looksName(cellStr((aoa[r]||[])[c])))s++;
     if(s>=bs&&s>0){bs=s;best=c}
   }
   if(best<0)return null;
   const rows=[];
   for(let r=hr+1;r<aoa.length;r++){
-    const row=aoa[r]||[];const raw=String(row[best]??'').trim();if(!raw||/^(이름|성명|합계|계)$/.test(raw))continue;
+    const row=aoa[r]||[];const raw=cellStr(row[best]);if(!raw||/^(이름|성명|합계|계)$/.test(raw))continue;
     const codes=Array.from({length:len},(_,i)=>row[dc+i]);
-    const up=codes.map(v=>String(v??'').trim().toUpperCase());
+    const up=codes.map(v=>cellStr(v).toUpperCase());
     if(!up.some(v=>normCode(v,'n')||normCode(v,'d')))continue;
-    let kind=M.doctors.some(x=>findPerson('d',raw)===x)?'d':M.nurses.some(x=>x.name===raw)?'n':
-      (/^[A-Za-z]+\s?\d+/.test(raw)||up.includes('DN')||up.includes('24'))?'d':'n';
+    const kind=findPerson('d',raw)?'d':findPerson('n',raw)?'n':
+      (/^[A-Za-z]+\s?\d+/.test(raw)||isNick(raw)||up.includes('DN')||up.includes('24'))?'d':'n';
     rows.push({kind,raw,codes,use:true});
   }
-  return{hr,dc,len,nameCol:best,rows};
+  return rows.length?{len,rows}:null;
+}
+// ② 날짜 줄 × 근무 칸 (날짜 | D | N 칸에 Dr호 같은 이름) — 의사 당직표에 흔한 모양
+const shiftOf=v=>{const t=cellStr(v).replace(/\s/g,'').toUpperCase();
+  if(/^(D|DAY|주간|낮|오전|DUTYD)$/.test(t))return'D';
+  if(/^(N|NIGHT|야간|밤|오후|NIGHTDUTY)$/.test(t))return'N';
+  if(/^(DN|24|24H|24시간|당직|당직의|D\/N)$/.test(t))return'DN';
+  return null};
+function detectDateRows(aoa){
+  for(let r=0;r<Math.min(aoa.length,40);r++){
+    const row=aoa[r]||[];const sc=[];row.forEach((v,c)=>{const k=shiftOf(v);if(k)sc.push({c,k})});
+    if(!sc.length)continue;
+    // 날짜 칸: 아래 줄에 날짜가 가장 많은 칸
+    let dc=-1,best=0;
+    for(let c=0;c<row.length+2;c++){if(sc.some(x=>x.c===c))continue;let n=0;for(let i=r+1;i<aoa.length;i++)if(dayNum((aoa[i]||[])[c]))n++;if(n>best){best=n;dc=c}}
+    if(dc<0||best<7)continue;
+    const acc=new Map();const n=dim();
+    for(let i=r+1;i<aoa.length;i++){
+      const d=dayNum((aoa[i]||[])[dc]);if(!d)continue;
+      sc.forEach(({c,k})=>cellStr((aoa[i]||[])[c]).split(/[\n,\/·&+]+|\s{2,}|\s(?=dr)/i).map(x=>x.trim()).filter(x=>x&&!/^[-–·.]$/.test(x)).forEach(nm=>{
+        if(!acc.has(nm))acc.set(nm,Array(n).fill(''));const a=acc.get(nm);const cur=a[d-1];
+        a[d-1]=!cur?k:(cur===k?k:'DN');
+      }));
+    }
+    if(!acc.size)continue;
+    return{len:n,rows:[...acc].map(([raw,codes])=>({kind:'d',raw,codes,use:true}))};
+  }
+  return null;
+}
+// 표 HTML → 2차원 배열 (합친 칸은 같은 값으로 채움)
+function tableToAoa(t){
+  const grid=[];
+  [...t.rows].forEach((tr,r)=>{grid[r]=grid[r]||[];let c=0;
+    [...tr.cells].forEach(td=>{
+      while(grid[r][c]!==undefined)c++;
+      const cl=td.cloneNode(true);cl.querySelectorAll('br').forEach(b=>b.replaceWith('\n'));cl.querySelectorAll('p,div').forEach(p=>p.append('\n'));
+      const v=cl.textContent.replace(/ /g,' ').replace(/[ \t]+/g,' ').replace(/\s*\n\s*/g,'\n').trim();
+      const rs=Math.max(1,+td.rowSpan||1),cs=Math.max(1,+td.colSpan||1);
+      for(let i=0;i<rs;i++)for(let j=0;j<cs;j++){(grid[r+i]=grid[r+i]||[])[c+j]=v}
+      c+=cs;
+    })});
+  return grid.map(r=>Array.from(r,v=>v??''));
+}
+let src=null,pv=null;
+function pickSheet(){
+  const m=+ym.split('-')[1];
+  const ok=src.sheets.map((s,i)=>({i,s})).filter(x=>detectAoa(x.s.aoa));
+  return(ok.find(x=>new RegExp(`(^|[^0-9])${m}\\s*월`).test(x.s.name))||ok[0]||{i:0}).i;
 }
 function loadDutyFile(f){
-  if(!window.XLSX){alert('엑셀 기능을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.');return}
+  if(!window.XLSX){alert('엑셀 기능을 불러오지 못했어요.');return}
   const rd=new FileReader();
   rd.onload=()=>{
-    try{xlsWB=XLSX.read(rd.result,{type:'array',cellDates:true})}catch(e){$('#dutyPrev').innerHTML='<p class="warn">파일을 읽지 못했어요.</p>';return}
-    // 날짜 줄을 찾을 수 있는 시트 중, 이번 달 숫자가 시트 이름에 들어간 것을 우선
-    const m=+ym.split('-')[1];
-    const cands=xlsWB.SheetNames.filter(n=>detectSheet(XLSX.utils.sheet_to_json(xlsWB.Sheets[n],{header:1,raw:true,defval:''})));
-    const pick=cands.find(n=>new RegExp(`(^|[^0-9])${m}\\s*월`).test(n))||cands[0]||xlsWB.SheetNames[0];
-    showDutyPreview(pick,f.name);
+    let wb;try{wb=XLSX.read(rd.result,{type:'array',cellDates:true})}catch(e){$('#dutyPrev').innerHTML='<p class="warn">파일을 읽지 못했어요. 한글 파일이면 표를 복사해서 위 칸에 붙여넣어 주세요.</p>';return}
+    src={name:f.name,sheets:wb.SheetNames.map(n=>({name:n,aoa:XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:true,defval:''})}))};
+    showDutyPreview(pickSheet());
   };
   rd.readAsArrayBuffer(f);
 }
-let pv=null;
-function showDutyPreview(sheet,fname){
-  const aoa=XLSX.utils.sheet_to_json(xlsWB.Sheets[sheet],{header:1,raw:true,defval:''});
-  pv=detectSheet(aoa);
-  const sel=xlsWB.SheetNames.length>1?`<select id="pvSheet">${xlsWB.SheetNames.map(n=>`<option ${n===sheet?'selected':''}>${esc(n)}</option>`).join('')}</select>`:'';
-  let h=`<div class="row" style="margin-bottom:8px"><b>${esc(fname||'')}</b>${sel}</div>`;
-  if(!pv||!pv.rows.length){$('#dutyPrev').innerHTML=h+'<p class="warn">이 시트에서 날짜(1, 2, 3…) 줄이나 근무자를 찾지 못했어요. 다른 시트를 고르거나, 아래 "복사해 붙여넣기"를 써 주세요.</p>';bindPv(fname);return}
+const pz=$('#pasteZone');
+pz.addEventListener('paste',e=>{
+  e.preventDefault();
+  const html=e.clipboardData.getData('text/html'),txt=e.clipboardData.getData('text/plain');
+  let sheets=[];
+  if(html&&/<table/i.test(html)){
+    const doc=new DOMParser().parseFromString(html,'text/html');
+    sheets=[...doc.querySelectorAll('table')].filter(t=>!t.querySelector('table')).map((t,i)=>({name:`표 ${i+1}`,aoa:tableToAoa(t)})).filter(x=>x.aoa.length>1);
+  }
+  if(!sheets.length&&txt)sheets=[{name:'표 1',aoa:txt.replace(/\r/g,'').split('\n').map(l=>l.split('\t'))}];
+  pz.blur();
+  if(!sheets.length){$('#dutyPrev').innerHTML='<p class="warn">붙여넣은 내용에서 표를 찾지 못했어요.</p>';return}
+  src={name:'붙여넣은 표',sheets};showDutyPreview(pickSheet());
+});
+pz.addEventListener('beforeinput',e=>{if(e.inputType!=='insertFromPaste')e.preventDefault()});
+pz.addEventListener('drop',e=>e.preventDefault());
+
+function showDutyPreview(si){pv=detectAoa(src.sheets[si].aoa);if(pv)pv.si=si;renderPv(si)}
+function renderPv(si){
+  const sel=src.sheets.length>1?`<select id="pvSheet">${src.sheets.map((x,i)=>`<option value="${i}" ${i===si?'selected':''}>${esc(x.name)}</option>`).join('')}</select>`:'';
+  let h=`<div class="row" style="margin-bottom:8px"><b>${esc(src.name)}</b>${sel}</div>`;
+  if(!pv){$('#dutyPrev').innerHTML=h+'<p class="warn">날짜(1, 2, 3…)와 근무자를 찾지 못했어요. 다른 시트/표를 고르거나, 근무표 모양을 알려주시면 맞춰 드려요.</p>';bindPv();return}
   const n=dim();
-  h+=`<p class="muted" style="margin:0 0 8px">${pv.rows.length}명을 찾았어요. 직종이 맞는지 확인하고 적용하세요.`+(pv.len!==n?` <span class="warn">(파일은 ${pv.len}일, 이번 달은 ${n}일)</span>`:'')+`</p>`;
-  h+='<div class="scroll"><table class="pv"><tr><th>적용</th><th>이름</th><th>직종</th><th>근무 수</th><th>미리보기</th></tr>'+pv.rows.map((r,i)=>{
+  h+=`<p class="muted" style="margin:0 0 8px">${pv.rows.length}명을 찾았어요. <b>연결</b>이 맞는지 확인하고 적용하세요. 의사 호칭(Dr호 등)은 한 번 연결하면 명단에 기억돼요.`+(pv.len!==n?` <span class="warn">(표는 ${pv.len}일, 이번 달은 ${n}일)</span>`:'')+`</p>`;
+  const optsFor=(r)=>{const arr=r.kind==='n'?M.nurses:M.doctors;const cur=r.target!==undefined?r.target:((findPerson(r.kind,r.raw)||{}).id||'');r.target=cur;
+    return `<select data-tgt="${pv.rows.indexOf(r)}"><option value="">＋ 새로 추가</option>${arr.map(p=>`<option value="${p.id}" ${p.id===cur?'selected':''}>${esc(r.kind==='d'?`${dlbl(p)} · ${dName(p)}`:p.name)}</option>`).join('')}</select>`};
+  h+='<div class="scroll"><table class="pv"><tr><th>적용</th><th>표의 이름</th><th>직종</th><th>연결</th><th>근무 수</th><th>미리보기</th></tr>'+pv.rows.map((r,i)=>{
     const c=r.codes.map(v=>normCode(v,r.kind));
     return `<tr><td><input type="checkbox" data-use="${i}" ${r.use?'checked':''}></td><td><b>${esc(r.raw)}</b></td>
       <td><select data-kind="${i}"><option value="n" ${r.kind==='n'?'selected':''}>간호사</option><option value="d" ${r.kind==='d'?'selected':''}>의사</option></select></td>
+      <td>${optsFor(r)}</td>
       <td>${c.filter(Boolean).length}</td><td class="codes">${c.slice(0,14).map(v=>v||'·').join(' ')}${pv.len>14?' …':''}</td></tr>`}).join('')+'</table></div>';
   const mc=modCount();
   if(mc)h+=`<label class="row" style="margin-top:10px;font-size:.88rem;gap:6px"><input type="checkbox" id="pvKeep" checked> 직접 고친 칸(${mc}칸, ● 표시)은 그대로 두기</label>`;
   h+=`<div class="row" style="margin-top:10px"><button class="btn pri" id="pvApply">${+ym.split('-')[1]}월 근무표에 적용</button><button class="btn ghost" id="pvCancel">취소</button></div>`;
-  $('#dutyPrev').innerHTML=h;bindPv(fname);
+  $('#dutyPrev').innerHTML=h;bindPv();
 }
-function bindPv(fname){
-  const s=$('#pvSheet');if(s)s.onchange=()=>showDutyPreview(s.value,fname);
+function bindPv(){
+  const s=$('#pvSheet');if(s)s.onchange=()=>showDutyPreview(+s.value);
   const box=$('#dutyPrev');
-  box.onchange=e=>{const t=e.target;if(!pv||t.id==='pvKeep')return;
+  box.onchange=e=>{const t=e.target;if(!pv||t.id==='pvKeep'||t.id==='pvSheet')return;
     if(t.dataset.use)pv.rows[+t.dataset.use].use=t.checked;
-    if(t.dataset.kind){pv.rows[+t.dataset.kind].kind=t.value;showDutyPreview($('#pvSheet')?$('#pvSheet').value:xlsWB.SheetNames[0],fname)}};
+    if(t.dataset.tgt)pv.rows[+t.dataset.tgt].target=t.value;
+    if(t.dataset.kind){const r=pv.rows[+t.dataset.kind];r.kind=t.value;delete r.target;renderPv(pv.si)}};
   const a=$('#pvApply');if(a)a.onclick=()=>{
     const rows=pv.rows.filter(r=>r.use);const added=applyRows(rows,$('#pvKeep')?$('#pvKeep').checked:false);
-    $('#dutyPrev').innerHTML=`<p class="muted">✓ ${rows.length}명 근무표를 적용했어요.${added?` 새 이름 ${added}명이 명단에 추가됐어요.`:''}</p>`;pv=null};
+    $('#dutyPrev').innerHTML=`<p class="muted">✓ ${rows.length}명 근무표를 적용했어요.${added?` 새 이름 ${added}명이 명단에 추가됐어요 — 근무자 명단에서 코드·호칭을 확인하세요.`:''}</p>`;pv=null};
   const c=$('#pvCancel');if(c)c.onclick=()=>{$('#dutyPrev').innerHTML='';pv=null};
 }
 $('#dutyFile').onchange=e=>{const f=e.target.files[0];if(f)loadDutyFile(f);e.target.value=''};
@@ -776,7 +869,7 @@ function renderStat(){
   const s=S(day);const working=new Set([...onDuty(M.doctors,day,'D'),...onDuty(M.doctors,day,'N')].map(p=>p.id));
   let h='<thead><tr><th></th>'+CATS.map(c=>`<th>${c}</th>`).join('')+'<th class="tot">계</th></tr></thead>';
   const row=(lbl,arr,key,cls)=>`<tr class="${cls}"><td class="lb">${lbl}</td>`+CATS.map((c,i)=>`<td class="inp"><input type="number" min="0" inputmode="numeric" data-r="${key}" data-i="${i}" value="${arr&&num(arr[i])?num(arr[i]):''}"></td>`).join('')+`<td class="tot rs">${sm(arr||[])}</td></tr>`;
-  M.doctors.forEach(p=>{h+=row(`${esc(p.code)} ${esc((p.name||'').slice(0,1))}${working.has(p.id)?'<span class="badge">근무</span>':''}`,s.doc[p.id],p.id,working.has(p.id)?'':'off')});
+  M.doctors.forEach(p=>{h+=row(`${esc(dlbl(p))}${working.has(p.id)?'<span class="badge">근무</span>':''}`,s.doc[p.id],p.id,working.has(p.id)?'':'off')});
   h+=row('기타',s.etc,'_etc','');
   h+='<tr class="sum"><td class="lb">합계</td>'+CATS.map((c,i)=>`<td class="ct" data-i="${i}"></td>`).join('')+'<td class="ct" data-i="sum"></td></tr>';
   $('#statTbl').innerHTML=h;
@@ -808,7 +901,7 @@ $('#p-stat').addEventListener('focusin',e=>{if(e.target.select)e.target.select()
 const dot=v=>num(v)?num(v):'·';
 function sheetHTML(d){
   const[y,m]=ym.split('-').map(Number);const T=dayTotals(d);
-  const names=(arr,c)=>onDuty(arr,d,c).map(p=>esc(p.name)).join(', ');
+  const names=(arr,c)=>onDuty(arr,d,c).map(p=>esc(dName(p))).join(', ');
   const nurseD=[...onDuty(M.nurses,d,'S').map(p=>esc(p.name)+'(S)'),...onDuty(M.nurses,d,'D').map(p=>esc(p.name))].join(', ');
   return `<div class="sheet">
 <h4>간호일지</h4>
@@ -847,7 +940,6 @@ function monthAgg(k=ym){
   const tot=CATS.map((c,i)=>X.doctors.reduce((a,p)=>a+doc[p.id][i],0)+etc[i]);
   return{doc,etc,tot,drunk,send,days,doctors:X.doctors};
 }
-const dlbl=p=>`${p.code||''} ${(p.name||'').slice(0,1)}`.trim();
 const zero=()=>CATS.map(()=>0);
 const addv=(a,b)=>a.map((x,i)=>x+num(b&&b[i]));
 /* 여러 달을 의사(코드+성 기준)별로 합침 */
@@ -967,7 +1059,7 @@ function renderDays(){
   const n=dim(),mm=+ym.split('-')[1];
   const opts=Array.from({length:n},(_,i)=>{const d=i+1;return `<option value="${d}">${mm}월 ${d}일 (${WD[wd(d)]})</option>`}).join('');
   $$('.daySel').forEach(s=>{s.innerHTML=opts;s.value=day});
-  const nm=c=>onDuty(M.doctors,day,c).map(p=>p.name).join(', ')||'-';
+  const nm=c=>onDuty(M.doctors,day,c).map(dName).join(', ')||'-';
   $$('.dayInfo').forEach(e=>e.textContent=`근무 의사  D ${nm('D')}  ·  N ${nm('N')}`);
 }
 function renderTab(){
