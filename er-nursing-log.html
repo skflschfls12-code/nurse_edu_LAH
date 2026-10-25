@@ -174,15 +174,17 @@ table.st input::-webkit-outer-spin-button,table.st input::-webkit-inner-spin-but
 .sheet .t3 tr.r td{border-top-width:.12mm;border-bottom-width:.12mm}
 .sheet .t3 tr.r1 td{border-top-width:.5mm}.sheet .t3 tr.r4 td{border-bottom-width:.5mm}
 #printArea{display:none}
-.memo{position:fixed;left:14px;bottom:12px;z-index:30;max-width:min(320px,60vw);font-size:.8rem;color:var(--sub);background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:99px;padding:5px 13px;box-shadow:0 2px 8px rgba(16,24,40,.06);outline:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:text}
+.memowrap{padding:0 16px 14px}
+.memo{display:inline-block;max-width:min(420px,90vw);font-size:.78rem;color:var(--sub);border:1px solid transparent;border-radius:6px;padding:2px 6px;outline:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:text}
+.memo:hover{border-color:var(--line)}
 .memo:empty::before{content:"＋ 문구 넣기";color:var(--faint)}
 .memo:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--accs);text-overflow:clip}
-footer{max-width:1040px;margin:0 auto;padding:0 16px 64px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.8rem;color:var(--faint)}
+footer{max-width:1040px;margin:0 auto;padding:0 16px 28px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.8rem;color:var(--faint)}
 
 @media print{
   @page{size:A4 landscape;margin:0}
   body{background:#fff}
-  .top,main,footer,.memo{display:none}
+  .top,main,footer,.memowrap{display:none}
   #printArea{display:block}
   .sheet{box-shadow:none;margin:0;width:297mm;height:209.5mm;page-break-after:always;break-after:page;overflow:hidden}
   .sheet:last-child{page-break-after:auto;break-after:auto}
@@ -351,12 +353,12 @@ footer{max-width:1040px;margin:0 auto;padding:0 16px 64px;display:flex;gap:8px;a
 </main>
 
 <footer>
-  <span>저장 폴더를 연결하면 그 폴더의 "응급실통계_데이터.json"에 바로바로 저장되고, 하루 한 번 "백업" 폴더에 사본이 남음.</span>
+  <span>저장 폴더를 연결하면 그 폴더의 "응급실통계_데이터.json"에 바로바로 저장되고, 하루 한 번 "백업" 폴더에 사본이 남음(최근 60개만 보관).</span>
   <span class="sp"></span>
   <button class="btn sm" id="bkSave">백업 파일 저장</button>
   <button class="btn sm" id="bkLoadBtn">백업 불러오기</button><input type="file" id="bkLoad" accept=".json,application/json" hidden>
 </footer>
-<div class="memo" id="memo" contenteditable="true" spellcheck="false" title="눌러서 문구 바꾸기"></div>
+<div class="memowrap"><div class="memo" id="memo" contenteditable="true" spellcheck="false" title="눌러서 문구 바꾸기"></div></div>
 <div id="printArea"></div>
 
 <!-- SheetJS 0.18.5 (Apache-2.0) — 인터넷 없이도 엑셀 기능이 되도록 파일 안에 포함 -->
@@ -452,13 +454,16 @@ async function writeNow(){
   writing=true;
   try{
     const fh=await dirH.getFileHandle(FN,{create:true});const w=await fh.createWritable();
-    await w.write(JSON.stringify(DB,null,1));await w.close();
+    await w.write(JSON.stringify(DB));await w.close();
     lastMod=(await fh.getFile()).lastModified;lastSaved=new Date();folderErr='';
     const today=new Date().toISOString().slice(0,10);
     if(bkDay!==today){ // 하루 한 번 백업 사본
       const bd=await dirH.getDirectoryHandle('백업',{create:true});
       const bf=await bd.getFileHandle(`데이터_${today}.json`,{create:true});const bw=await bf.createWritable();
       await bw.write(JSON.stringify(DB));await bw.close();bkDay=today;
+      // 백업은 최근 60개만 남김
+      const names=[];for await(const [n,h] of bd.entries())if(h.kind==='file'&&/^데이터_\d{4}-\d{2}-\d{2}\.json$/.test(n))names.push(n);
+      names.sort().slice(0,-60).forEach(n=>bd.removeEntry(n).catch(()=>{}));
     }
   }catch(e){
     console.error('folder write',e&&e.name,e&&e.message);folderErr='저장 실패';
