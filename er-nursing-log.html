@@ -973,34 +973,50 @@ $('#p-stat').addEventListener('focusin',e=>{if(e.target.select)e.target.select()
 
 /* ---------- 지난 통계 엑셀 불러오기 ---------- */
 let statImp=null;
+// 통계 엑셀 한 파일 읽기 — 날짜는 제목/날짜값/year·month·day 칸/시트이름·파일이름 순서로 찾음
+const nsp=v=>String(v??'').replace(/\s/g,'');
 function parseStatBook(wb,fname){
-  const out={};let fy=null,fm=null;
-  const fmm=String(fname).match(/(\d{2,4})\s*년\s*(\d{1,2})\s*월/);if(fmm){fy=+fmm[1]<100?2000+ +fmm[1]:+fmm[1];fm=+fmm[2]}
-  wb.SheetNames.forEach(sn=>{
-    const aoa=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:''});
+  const out={},notes=[];let fy=null,fm=null;
+  const fmm=nsp(fname).match(/(\d{2,4})년(\d{1,2})월/);if(fmm){fy=+fmm[1]<100?2000+ +fmm[1]:+fmm[1];fm=+fmm[2]}
+  // year·month 칸 (합계 시트 포함 아무 시트에서나)
+  const ymCells=aoa=>{const r={};for(let i=0;i<Math.min(10,aoa.length);i++)(aoa[i]||[]).forEach((v,c)=>{const t=nsp(v).toLowerCase();if(['year','month','day','년','월','일'].includes(t)){const val=num((aoa[i+1]||[])[c]);if(val){const k={'년':'year','월':'month','일':'day'}[t]||t;r[k]=val}}});return r};
+  const sheets=wb.SheetNames.map(sn=>({sn,aoa:XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:''})}));
+  sheets.forEach(({aoa})=>{const r=ymCells(aoa);if(!fy&&r.year&&r.year>2000)fy=r.year;if(!fm&&r.month&&r.month<=12)fm=r.month});
+  sheets.forEach(({sn,aoa})=>{
     let y=null,m=null,d=null;
-    for(let r=0;r<Math.min(6,aoa.length)&&!d;r++)for(const v of aoa[r]||[]){const t=String(v).match(/(\d{4})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일/);if(t){y=+t[1];m=+t[2];d=+t[3];break}}
-    if(!d){if(/^\d{1,2}$/.test(sn.trim())&&fy){y=fy;m=fm;d=+sn}else return} // 합계 시트 등은 건너뜀
+    for(let r=0;r<Math.min(8,aoa.length)&&!d;r++)for(const v of aoa[r]||[]){
+      if(v instanceof Date&&v.getFullYear()>2000){y=v.getFullYear();m=v.getMonth()+1;d=v.getDate();break}
+      const t=nsp(v).match(/(\d{4})년(\d{1,2})월(\d{1,2})일/)||nsp(v).match(/^(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})\.?$/);
+      if(t){y=+t[1];m=+t[2];d=+t[3];break}
+      if(/총합|합계/.test(nsp(v))&&r<4){d=-1;break}
+    }
+    if(d===-1)return; // 합계 시트
+    if(!d){const yc=ymCells(aoa);if(yc.day&&yc.day<=31){d=yc.day;y=yc.year||fy;m=yc.month||fm}}
+    if(!d){const t=nsp(sn).match(/^(\d{1,2})일?$/);if(t){d=+t[1];y=fy;m=fm}}
+    if(!d)return;
+    if(!y||!m){notes.push(`시트 '${sn}': 년/월을 못 찾음`);return}
     // 귀가·입원… 머리 줄
     let hr=-1,col={};
-    for(let r=0;r<Math.min(15,aoa.length);r++){const row=(aoa[r]||[]).map(v=>String(v).trim());const c={};CATS.forEach(k=>{const i=row.indexOf(k);if(i>=0)c[k]=i});if(Object.keys(c).length>=5){hr=r;col=c;break}}
-    if(hr<0)return;
+    for(let r=0;r<Math.min(30,aoa.length);r++){const row=(aoa[r]||[]).map(nsp);const c={};CATS.forEach(k=>{const i=row.indexOf(k);if(i>=0)c[k]=i});if(c['귀가']!==undefined&&c['입원']!==undefined&&Object.keys(c).length>=4){hr=r;col=c;break}}
+    if(hr<0){notes.push(`시트 '${sn}': 귀가·입원 머리줄을 못 찾음 (앞부분: ${aoa.slice(0,6).map(r=>(r||[]).filter(v=>v!=='').slice(0,6).map(v=>v instanceof Date?`${v.getMonth()+1}/${v.getDate()}`:v).join('|')).filter(Boolean).join(' / ').slice(0,120)})`);return}
+    const lc=Math.max(0,Math.min(...Object.values(col))-1); // 이름 칸 = 귀가 바로 왼쪽
     const day={doc:{},etc:CATS.map(()=>0),drunk:[0,0,0]};let r=hr+1;
     for(;r<aoa.length;r++){
-      const row=aoa[r]||[];const lb=String(row[0]??'').trim();
-      if(lb==='주취자')break;
-      if(lb==='합계'||lb==='계')continue;
+      const row=aoa[r]||[];const lb=String(row[lc]??'').trim(),lbn=nsp(lb);
+      if(lbn==='주취자'||row.some(v=>nsp(v)==='주취자'))break;
+      if(lbn==='합계'||lbn==='계'||lbn==='총계')continue;
       const v=CATS.map(k=>col[k]!==undefined?num(row[col[k]]):0);
       if(!lb){if(v.some(x=>x))day.etc=addv(day.etc,v);continue}
-      if(lb==='기타')day.etc=addv(day.etc,v);else day.doc[lb]=addv(day.doc[lb]||zero(),v);
+      if(lbn==='기타')day.etc=addv(day.etc,v);else day.doc[lb]=addv(day.doc[lb]||zero(),v);
     }
     for(;r<aoa.length;r++){ // 주취자: 귀가·입원·전원 머리 다음 줄
-      const row=(aoa[r]||[]).map(v=>String(v).trim());const i=DCATS.map(k=>row.indexOf(k));
+      const row=(aoa[r]||[]).map(nsp);const i=DCATS.map(k=>row.indexOf(k));
       if(i.every(x=>x>=0)){const nx=aoa[r+1]||[];day.drunk=i.map(x=>num(nx[x]));break}
     }
     const k=`${y}-${pad(m)}`;(out[k]=out[k]||{})[d]=day;
   });
-  return out;
+  if(!Object.keys(out).length&&!notes.length)notes.push(`날짜 시트를 못 찾음 (시트: ${wb.SheetNames.slice(0,8).join(', ')}${wb.SheetNames.length>8?' …':''})`);
+  return{out,notes};
 }
 // "er16 하" → 그 달 의사 (없으면 새로 만듦)
 function docForLabel(X,lb){
@@ -1014,16 +1030,18 @@ function readStatFiles(files){
   if(!window.XLSX){alert('엑셀 불러오기 실패.');return}
   const all={},bad=[];let left=files.length;
   [...files].forEach(f=>{const rd=new FileReader();
-    rd.onload=()=>{try{const wb=XLSX.read(rd.result,{type:'array'});const r=parseStatBook(wb,f.name);
-        if(!Object.keys(r).length)bad.push(f.name);Object.entries(r).forEach(([k,ds])=>Object.assign(all[k]=all[k]||{},ds))}catch(e){bad.push(f.name)}
+    rd.onload=()=>{try{const wb=XLSX.read(rd.result,{type:'array',cellDates:true});const{out,notes}=parseStatBook(wb,f.name);
+        if(!Object.keys(out).length)bad.push(`${f.name} — ${notes.slice(0,2).join(' · ')||'통계 시트 없음'}`);
+        else if(notes.length)bad.push(`${f.name} — 일부 시트 건너뜀: ${notes.slice(0,2).join(' · ')}${notes.length>2?` 외 ${notes.length-2}개`:''}`);
+        Object.entries(out).forEach(([k,ds])=>Object.assign(all[k]=all[k]||{},ds))}catch(e){bad.push(`${f.name} — 파일을 열지 못함 (${e.message||e})`)}
       if(--left===0){statImp=all;renderStatImp(bad)}};
     rd.readAsArrayBuffer(f)});
 }
 function renderStatImp(bad){
   const ks=Object.keys(statImp).sort();
   let h='';
-  if(bad.length)h+=`<p class="warn">읽지 못한 파일: ${bad.map(esc).join(', ')}</p>`;
-  if(!ks.length){$('#statPrev').innerHTML=h+'<p class="warn">통계 시트(“2026년 1월 1일” 제목, 귀가·입원… 머리줄)를 찾지 못함.</p>';return}
+  if(bad.length)h+=`<div class="note" style="margin:0 0 10px;color:#B42318">${bad.map(esc).join('<br>')}</div>`;
+  if(!ks.length){$('#statPrev').innerHTML=h+'<p class="muted">위 내용을 캡처해서 보내주시면 그 파일 모양에 맞춰 드려요.</p>';return}
   h+='<div class="scroll"><table class="pv"><tr><th>적용</th><th>달</th><th>숫자 있는 날</th><th>총계</th><th>주취자</th><th>의사</th><th>이미 입력된 날</th></tr>'+ks.map(k=>{
     const ds=statImp[k],[y,m]=k.split('-').map(Number),X=DB.months[k];
     const days=Object.entries(ds).filter(([d,v])=>Object.values(v.doc).some(a=>sm(a))||sm(v.etc)||sm(v.drunk));
