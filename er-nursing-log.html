@@ -31,7 +31,7 @@ table.g td.nm{position:sticky;left:0;background:#fff;text-align:left;padding:3px
 table.g th.nm{position:sticky;left:0;z-index:2}
 table.g th.we{color:#C0392B}
 table.g td.c{width:30px;min-width:30px;height:30px;cursor:pointer;user-select:none;font-weight:800}
-td.c.D{background:#FFF3C4}td.c.E{background:#D9ECFF}td.c.N{background:#E3DAF7}td.c.DN{background:#F7D9D9}
+td.c.D{background:#FFF3C4}td.c.E{background:#D9ECFF}td.c.N{background:#E3DAF7}td.c.DN{background:#F7D9D9}td.c.S{background:#D6F0DC}
 td.c.sel{outline:2px solid #20242B;outline-offset:-2px}
 .legend span{display:inline-block;padding:1px 8px;border-radius:6px;margin-right:4px;font-weight:800;font-size:.8rem}
 .list .it{display:flex;gap:6px;align-items:center;margin-bottom:6px}
@@ -133,13 +133,13 @@ table.st td.nodata{color:#A8A396}
 <section class="pane" id="p-duty">
   <div class="card">
     <h2>근무표</h2>
-    <p class="muted" style="margin:0 0 6px">칸을 누를 때마다 바뀌어요. 간호사: 빈칸 → D → E → N, 의사: 빈칸 → D → N → DN(24시간). 칸을 누른 뒤 키보드 <b>D·E·N</b> 입력, <b>Delete</b>로 지우기, 방향키로 이동도 돼요.</p>
-    <div class="legend muted" style="margin-bottom:8px"><span style="background:#FFF3C4">D</span><span style="background:#D9ECFF">E</span><span style="background:#E3DAF7">N</span><span style="background:#F7D9D9">DN</span></div>
+    <p class="muted" style="margin:0 0 6px">칸을 누를 때마다 바뀌어요. 간호사: 빈칸 → D → E → N → S(헤드널스), 의사: 빈칸 → D → N → DN(24시간). 칸을 누른 뒤 키보드 <b>D·E·N·S</b> 입력, <b>Delete</b>로 지우기, 방향키로 이동도 돼요.</p>
+    <div class="legend muted" style="margin-bottom:8px"><span style="background:#FFF3C4">D</span><span style="background:#D9ECFF">E</span><span style="background:#E3DAF7">N</span><span style="background:#F7D9D9">DN</span><span style="background:#D6F0DC">S</span> <span>S = 헤드널스 → 일지 D칸 맨 앞에 "이름(S)"로 들어가요</span></div>
     <div class="scroll"><table class="g" id="dutyTbl"></table></div>
   </div>
   <div class="card">
     <h2>엑셀 근무표 붙여넣기</h2>
-    <p class="muted" style="margin:0 0 6px">엑셀 근무표에서 <b>이름 칸부터 마지막 날짜 칸까지</b> 행을 복사해 붙여넣으세요. 한 행 = <code>이름, 1일, 2일, …</code> 순서. D/E/N 외의 글자(Off, 휴 등)는 빈칸으로 처리돼요. 명단에 없는 이름은 아래 선택한 직종으로 추가돼요.</p>
+    <p class="muted" style="margin:0 0 6px">엑셀 근무표에서 <b>이름 칸부터 마지막 날짜 칸까지</b> 행을 복사해 붙여넣으세요. 한 행 = <code>이름, 1일, 2일, …</code> 순서. D/E/N/S 외의 글자(Off, 휴 등)는 빈칸으로 처리돼요. 명단에 없는 이름은 아래 선택한 직종으로 추가돼요.</p>
     <textarea id="dutyPaste" placeholder="홍길동&#9;D&#9;D&#9;E&#9;N&#9;Off ..."></textarea>
     <div class="row" style="margin-top:6px">
       <select id="pasteKind"><option value="n">간호사 근무표</option><option value="d">의사 근무표</option></select>
@@ -291,7 +291,7 @@ function bulk(kind){
 $('#bulkNurse').onclick=()=>bulk('n');$('#bulkDoc').onclick=()=>bulk('d');
 
 /* ---------- 근무표 ---------- */
-const NCYC=['','D','E','N'],DCYC=['','D','N','DN'];
+const NCYC=['','D','E','N','S'],DCYC=['','D','N','DN'];
 let selCell=null;
 function renderDuty(){
   const n=dim();let h='<tr><th class="nm">이름</th>';
@@ -323,7 +323,7 @@ document.addEventListener('keydown',e=>{
   const mv=(dr,dc)=>{const all=$$('#dutyTbl tr').filter(r=>r.querySelector('td.c'));const ri=all.indexOf(td.parentElement);
     const r=all[ri+dr];const nd=selCell.d+dc;if(!r||nd<1||nd>dim())return;const t=r.querySelector(`td.c[data-d="${nd}"]`);
     td.classList.remove('sel');selCell={p:t.dataset.p,d:nd,k:t.dataset.k};t.classList.add('sel');t.scrollIntoView({block:'nearest',inline:'nearest'})};
-  const ok=td.dataset.k==='n'?['D','E','N']:['D','N'];
+  const ok=td.dataset.k==='n'?['D','E','N','S']:['D','N'];
   if(ok.includes(k)){let v=k;const cur=(M.duty[selCell.p]||{})[selCell.d]||'';
     if(td.dataset.k==='d'&&((cur==='D'&&k==='N')||(cur==='N'&&k==='D')))v='DN';
     setDuty(selCell.p,selCell.d,v);save();paintCell(td);e.preventDefault();mv(0,1)}
@@ -341,7 +341,7 @@ $('#dutyPasteBtn').onclick=()=>{
     if(!p){p=kind==='n'?{id:uid(),name:raw}:{id:uid(),...parseDoc(raw)};arr.push(p);added++}
     for(let d=1;d<=n;d++){
       let v=(cells[d]||'').trim().toUpperCase().replace(/\s/g,'');
-      if(kind==='n')v=['D','E','N'].includes(v)?v:'';
+      if(kind==='n')v=['D','E','N','S'].includes(v)?v:'';
       else v=(v==='D'||v==='N')?v:(['DN','D/N','24','24H','D+N'].includes(v)?'DN':'');
       setDuty(p.id,d,v);
     }cnt++;
@@ -405,7 +405,7 @@ function sheetHTML(d){
 <tr><td>일계</td>${T.t.map(v=>`<td>${dot(v)}</td>`).join('')}<td>${dot(T.sum)}</td><td>${T.send===''?'':dot(T.send)}</td></tr></table>
 <div class="bot">
 <table class="t2">
-<tr><td class="k" rowspan="3">Nr</td><td class="s">D</td><td class="v">${names(M.nurses,'D')}</td></tr>
+<tr><td class="k" rowspan="3">Nr</td><td class="s">D</td><td class="v">${[...onDuty(M.nurses,d,'S').map(p=>esc(p.name)+'(S)'),...onDuty(M.nurses,d,'D').map(p=>esc(p.name))].join(', ')}</td></tr>
 <tr><td class="s">E</td><td class="v">${names(M.nurses,'E')}</td></tr>
 <tr><td class="s">N</td><td class="v">${names(M.nurses,'N')}</td></tr>
 <tr><td class="k" rowspan="2">Dr</td><td class="s">D</td><td class="v">${names(M.doctors,'D')}</td></tr>
