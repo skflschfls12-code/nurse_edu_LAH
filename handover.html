@@ -146,6 +146,12 @@ tr.old .cell.date{color:var(--coral2);font-weight:700}
 .kind:hover{border-color:var(--line)}
 .kind.k-수리{color:var(--coral2)}.kind.k-전산{color:var(--cyan2)}.kind.k-기타{color:var(--sub)}
 .hide{display:none!important}
+.donenav{margin-top:10px;border-top:1px solid rgba(255,255,255,.08)}
+.from{display:inline-block;margin-top:7px;font-size:11.5px;font-weight:800;border-radius:6px;padding:1px 7px}
+.from.items{background:#E6F8FB;color:var(--cyan2)}.from.repairs{background:var(--redbg);color:var(--coral2)}
+.ddate{text-align:center;padding-top:7px;font-size:12.5px;color:var(--cyan2);font-weight:700;font-variant-numeric:tabular-nums}
+.ddate small{display:block;color:var(--faint);font-weight:400;font-size:11px}
+#secDone .cell.txt{color:var(--sub)}
 /* 탭: 왼쪽 메뉴에서 고른 칸 하나만 보여줌 (검색 중엔 전부) */
 .sec.off{display:none}
 body.searching .sec.off{display:block}
@@ -199,6 +205,7 @@ body.searching .sec{margin-bottom:18px}
     <a data-go="secRepairs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.5-2.5z"/></svg>수리 · 전산<span class="c" id="cRepairs"></span></a>
     <a data-go="secKeep"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6-5.3-3-5.3 3 1.2-6L3.4 9.3l6-.7z"/></svg>KEEP MEMO<span class="c" id="cKeep"></span></a>
     <a data-go="secContact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/></svg>연락처<span class="c" id="cContact"></span></a>
+    <a data-go="secDone" class="donenav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>해결됨<span class="c" id="cDone"></span></a>
   </nav>
   <div class="sfoot">
     <button class="sbtn" id="bLink" type="button" style="display:none">🔗 저장 파일 연결</button>
@@ -255,6 +262,15 @@ body.searching .sec{margin-bottom:18px}
       <table class="contacts"><tbody id="contacts"></tbody></table>
       <button class="addline" data-add="contacts" type="button">+ 연락처 추가</button>
     </section>
+
+  <section class="card sec" id="secDone">
+    <div class="sh"><div class="tick" style="background:#9AA3BA"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div><h2 class="it">DONE</h2><span class="ko">해결됨</span><span class="n" id="nDone"></span><span class="hint">체크를 풀면 원래 메뉴로 돌아가요</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <colgroup><col style="width:84px"><col style="width:76px"><col><col style="width:64px"><col style="width:31%"><col style="width:40px"></colgroup>
+      <thead><tr><th class="c">해결일</th><th class="c">구분</th><th>내용</th><th class="c">해결</th><th>기타메모</th><th></th></tr></thead>
+      <tbody id="done"></tbody>
+    </table></div>
+  </section>
 </main>
 <div id="toast"></div>
 
@@ -350,10 +366,20 @@ function rowRepair(it){
 function renderTable(kind){
   var s=sortRows(data[kind]), cols=kind==='items'?5:7, f=kind==='items'?rowItem:rowRepair;
   var h=s.open.map(f).join('');
-  if(!s.open.length)h+='<tr class="empty"><td colspan="'+cols+'">'+(s.done.length?'모두 해결됐어요 👍':'"+ '+(kind==='items'?'인계':'요청')+' 추가"를 눌러 시작하세요')+'</td></tr>';
-  if(s.done.length)h+='<tr class="grp" data-a="toggleDone"><td colspan="'+cols+'">'+(showDone[kind]?'▾':'▸')+' 해결됨 '+s.done.length+'건 '+(showDone[kind]?'숨기기':'보기')+'</td></tr>'+s.done.map(f).join('');
+  if(!s.open.length)h+='<tr class="empty"><td colspan="'+cols+'">'+(s.done.length?'모두 해결됐어요 👍 (해결된 건 왼쪽 "해결됨" 메뉴에 있어요)':'오른쪽 위 + 를 눌러 '+(kind==='items'?'인계':'요청')+'를 추가하세요')+'</td></tr>';
   $(kind).innerHTML=h;
   counts();
+}
+function renderDone(){
+  var L=[];
+  ['items','repairs'].forEach(function(k){data[k].forEach(function(it){if(it.done)L.push({k:k,it:it})})});
+  L.sort(function(a,b){return (a.it.doneDate||'')<(b.it.doneDate||'')?1:-1});
+  $('done').innerHTML=L.length?L.map(function(x){var it=x.it;
+    return '<tr data-id="'+it.id+'" data-k="'+x.k+'" class="done-row"><td><div class="ddate">'+(it.doneDate?show(it.doneDate):'-')+(it.date?'<small>등록 '+short(it.date)+'</small>':'')+'</div></td>'+
+      '<td style="text-align:center"><span class="from '+x.k+'">'+(x.k==='items'?'인계':(it.kind||'수리'))+'</span></td>'+
+      '<td>'+ta('text',it.text,'','txt')+(x.k==='repairs'&&it.to?'<div style="font-size:12px;color:var(--faint);padding:0 8px 4px">'+esc(it.to)+'</div>':'')+'</td><td>'+chk(it)+'</td><td>'+ta('memo',it.memo,'결과 메모')+'</td>'+
+      '<td><span class="rowtools"><button class="ico del" data-a="del" type="button" title="삭제">✕</button></span></td></tr>'}).join('')
+    :'<tr class="empty"><td colspan="6">아직 해결된 게 없어요</td></tr>';
 }
 function ring(el,pct,color){
   var r=28,c=2*Math.PI*r;
@@ -367,14 +393,14 @@ function counts(){
     var n=$('n'+x[1]);n.textContent=open?'미해결 '+open:'';n.className='n'+(open?' red':'');
     var c=$('c'+x[1]);c.textContent=open||'';c.className='c'+(open?' red':'');
   });
-  $('cKeep').textContent=data.keep.length||'';$('cContact').textContent=data.contacts.length||'';
+  $('cKeep').textContent=data.keep.length||'';var dn=data.items.concat(data.repairs).filter(function(i){return i.done}).length;$('cDone').textContent=dn||'';$('nDone').textContent=dn?dn+'건':'';$('cContact').textContent=data.contacts.length||'';
 }
-function render(){renderKeep();renderContacts();renderTable('items');renderTable('repairs');grow(document);applySearch();$('today').textContent=show(today())}
+function render(){renderKeep();renderContacts();renderTable('items');renderTable('repairs');renderDone();grow(document);applySearch();$('today').textContent=show(today())}
 function grow(root){root.querySelectorAll('textarea.cell').forEach(fit)}
 function fit(t){t.style.height='auto';t.style.height=t.scrollHeight+2+'px'}
 
 /* ---------- 편집 ---------- */
-function listOf(el){var s=el.closest('section');return {secKeep:'keep',secContact:'contacts',secItems:'items',secRepairs:'repairs'}[s&&s.id]}
+function listOf(el){var r=el.closest('[data-k]');if(r)return r.getAttribute('data-k');var s=el.closest('section');return {secKeep:'keep',secContact:'contacts',secItems:'items',secRepairs:'repairs'}[s&&s.id]}
 document.addEventListener('input',function(e){
   var t=e.target,f=t.getAttribute('data-f');if(!f||f==='date')return;
   var row=t.closest('[data-id]'),k=listOf(t);if(!row||!k)return;
@@ -414,7 +440,8 @@ document.addEventListener('click',function(e){
     row.classList.toggle('done',it.done);row.classList.toggle('dn',it.done);row.classList.remove('old','st');
     b.parentNode.innerHTML=chk(it).replace(/^<div class="chk">|<\/div>$/g,'');
     var m=row.querySelector('[data-f=memo]');
-    if(it.done&&m){m.value=it.memo;m.focus();m.setSelectionRange(m.value.length,m.value.length);toast('해결 ✓ 기타메모에 결과를 적어두세요')}
+    if(it.done&&m){m.value=it.memo;m.focus();m.setSelectionRange(m.value.length,m.value.length);toast('해결 ✓ 기타메모에 결과를 적어두세요 — 다른 메뉴로 가면 "해결됨"으로 옮겨져요')}
+    if(!it.done)toast(row.getAttribute('data-k')?'체크 해제 — 다른 메뉴로 가면 원래 자리로 돌아가요':'체크 해제');
     counts();
     return;
   }
@@ -451,7 +478,7 @@ function applySearch(){
   });
   document.querySelectorAll('.grp,.empty').forEach(function(r){r.style.display=q?'none':''});
   if(!q)['items','repairs'].forEach(function(k){if(!showDone[k])$(k).querySelectorAll('tr.dn').forEach(function(r){r.classList.add('hide')})});
-  ['secItems','secRepairs','secKeep','secContact'].forEach(function(id){var S=$(id),hit=false;
+  ['secItems','secRepairs','secKeep','secContact','secDone'].forEach(function(id){var S=$(id),hit=false;
     S.querySelectorAll('[data-id]').forEach(function(r){if(r.style.display!=='none')hit=true});S.classList.toggle('nohit',!!q&&!hit)});
   var si=$('sinfo');si.classList.toggle('on',!!q);
   si.innerHTML=q?'"<b>'+esc(q)+'</b>" 검색 결과 '+total+'건 (해결된 것 포함, 모든 칸에서 찾음) · <a href="#" id="sx">검색 지우기</a>':'';
@@ -519,13 +546,13 @@ $('bPrint').onclick=function(){window.print()};
 /* ---------- 시작 ---------- */
 load();render();window._c=1;counts();banner();
 /* 왼쪽 메뉴 = 탭: 누른 칸 하나만 보여줌 */
-var navs=document.querySelectorAll('#nav a'),SECS=['secItems','secRepairs','secKeep','secContact'];
+var navs=document.querySelectorAll('#nav a'),SECS=['secItems','secRepairs','secKeep','secContact','secDone'];
 function setTab(id){
   if(SECS.indexOf(id)<0)id='secItems';
   SECS.forEach(function(x){$(x).classList.toggle('off',x!==id)});
   navs.forEach(function(a){a.classList.toggle('on',a.getAttribute('data-go')===id)});
   try{localStorage.setItem(KEY+'-tab',id)}catch(e){}
-  window.scrollTo(0,0);grow($(id));
+  render();window.scrollTo(0,0);
 }
 navs.forEach(function(a){a.onclick=function(){if($('q').value){$('q').value='';applySearch()}setTab(a.getAttribute('data-go'))}});
 var _tab='secItems';try{_tab=localStorage.getItem(KEY+'-tab')||_tab}catch(e){}
