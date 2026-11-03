@@ -55,6 +55,8 @@ header .date{font-size:13px;opacity:.75}
 .cell:hover{border-color:var(--line)}
 .cell:focus{outline:none;border-color:var(--accent);background:var(--field);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
 .cell::placeholder{color:#C4C8CF}
+/* 빈 칸 안내 글자는 마우스를 올렸을 때만 */
+.tbl tr:not(:hover) .cell:not(:focus)::placeholder{color:transparent}
 .cell.date{text-align:center;font-variant-numeric:tabular-nums;padding-left:2px;padding-right:2px}
 
 /* KEEP MEMO */
@@ -327,12 +329,13 @@ function renderContacts(){
 function sortRows(list){
   var open=list.filter(function(i){return !i.done});
   var done=list.filter(function(i){return i.done}).sort(function(a,b){return (a.doneDate||'')<(b.doneDate||'')?1:-1});
-  open.sort(function(a,b){if(!!b.star!==!!a.star)return b.star?1:-1;var x=a.date||'9999',y=b.date||'9999';return x<y?-1:x>y?1:0});
+  /* 적은 순서 그대로 (★ 중요만 위로) */
+  var star=open.filter(function(i){return i.star});open=star.concat(open.filter(function(i){return !i.star}));
   return {open:open,done:done};
 }
 var showDone={items:false,repairs:false};
 function rowItem(it){
-  var cls=(it.done?'done ':'')+(it.star&&!it.done?'st ':'')+(!it.done&&it.date&&ago(it.date)>=7?'old':'');
+  var cls=(it.done?'done ':'')+(it.star&&!it.done?'st ':'');
   return '<tr data-id="'+it.id+'" class="'+cls+(it.done&&!showDone.items?' hide dn':it.done?' dn':'')+'">'+
     '<td>'+dateCell(it.date)+'</td><td>'+ta('text',it.text,'인계내용','txt')+'</td><td>'+chk(it)+'</td><td>'+ta('memo',it.memo,'예: 11/5 받음, 창고에 넣어둠')+'</td>'+
     '<td><span class="rowtools"><button class="starbtn'+(it.star?' on':'')+'" data-a="star" type="button" title="중요">★</button><button class="ico" data-a="toKeep" type="button" title="KEEP MEMO로 옮기기">↑</button><button class="ico del" data-a="del" type="button" title="삭제">✕</button></span></td></tr>';
