@@ -146,6 +146,19 @@ tr.old .cell.date{color:var(--coral2);font-weight:700}
 .kind:hover{border-color:var(--line)}
 .kind.k-수리{color:var(--coral2)}.kind.k-전산{color:var(--cyan2)}.kind.k-기타{color:var(--sub)}
 .hide{display:none!important}
+/* 탭: 왼쪽 메뉴에서 고른 칸 하나만 보여줌 (검색 중엔 전부) */
+.sec.off{display:none}
+body.searching .sec.off{display:block}
+body.searching .sec.nohit,body.searching .addline,body.searching .empty-li{display:none!important}
+body.searching .sec{margin-bottom:18px}
+/* 촘촘하게 */
+.tbl{border-spacing:0 4px}
+.tbl td{padding:1px 3px}
+.cell{min-height:29px;padding:4px 8px}
+.chk{padding-top:4px}
+.chk input{width:19px;height:19px}
+.sh{padding:12px 20px 10px}
+.keep li .cell{min-height:31px}
 
 .banner{margin-bottom:18px;background:#fff;border-left:4px solid var(--coral);border-radius:10px;box-shadow:var(--shadow2);padding:10px 14px;font-size:13px;display:flex;gap:10px;align-items:center}
 .banner.info{border-left-color:var(--cyan)}
@@ -175,6 +188,7 @@ tr.old .cell.date{color:var(--coral2);font-weight:700}
   .hide{display:table-row!important}
   tr.grp{display:none!important}
   .sec{break-inside:avoid-page}
+  .sec.off{display:block!important}
 }
 </style></head><body>
 <aside class="side">
@@ -209,11 +223,6 @@ tr.old .cell.date{color:var(--coral2);font-weight:700}
   <div class="sinfo" id="sinfo"></div>
   <div id="banner"></div>
 
-  <div class="stats">
-    <div class="card stat cy"><div class="ring" id="ringItems"></div><div><h3 class="it">HANDOVER</h3><p id="pItems"></p></div></div>
-    <div class="card stat co"><div class="ring" id="ringRepairs"></div><div><h3 class="it">REPAIR · IT</h3><p id="pRepairs"></p></div></div>
-    <div class="card stat nv"><div class="big" id="bigOpen">0</div><div><h3>남은 일</h3><p id="pOpen"></p></div></div>
-  </div>
 
   <section class="card sec" id="secItems">
     <div class="sh"><div class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div><h2 class="it">HANDOVER</h2><span class="ko">인계내용</span><span class="n" id="nItems"></span><span class="hint">★ 중요 표시하면 맨 위로</span></div>
@@ -235,8 +244,7 @@ tr.old .cell.date{color:var(--coral2);font-weight:700}
     </table></div>
   </section>
 
-  <div class="grid">
-    <section class="card sec" id="secKeep">
+  <section class="card sec" id="secKeep">
       <div class="sh"><div class="tick" style="background:var(--star)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div><h2 class="it">KEEP MEMO</h2><span class="ko">계속 지켜야 할 것</span><span class="n" id="nKeep"></span></div>
       <button class="plus" data-add="keep" type="button" title="메모 추가" style="background:var(--navy);box-shadow:0 3px 10px rgba(31,43,91,.35)">+</button>
       <ul class="keep" id="keep"></ul>
@@ -247,7 +255,6 @@ tr.old .cell.date{color:var(--coral2);font-weight:700}
       <table class="contacts"><tbody id="contacts"></tbody></table>
       <button class="addline" data-add="contacts" type="button">+ 연락처 추가</button>
     </section>
-  </div>
 </main>
 <div id="toast"></div>
 
@@ -359,11 +366,7 @@ function counts(){
     tot+=open;stars+=L.filter(function(i){return i.star&&!i.done}).length;
     var n=$('n'+x[1]);n.textContent=open?'미해결 '+open:'';n.className='n'+(open?' red':'');
     var c=$('c'+x[1]);c.textContent=open||'';c.className='c'+(open?' red':'');
-    ring($('ring'+x[1]),L.length?Math.round(done/L.length*100):0,x[2]);
-    $('p'+x[1]).textContent=L.length?'해결 '+done+' / 전체 '+L.length:'아직 없음';
   });
-  $('bigOpen').textContent=tot;
-  $('pOpen').textContent=stars?'★ 중요 '+stars+'건 포함':'해결 안 된 인계 + 요청';
   $('cKeep').textContent=data.keep.length||'';$('cContact').textContent=data.contacts.length||'';
 }
 function render(){renderKeep();renderContacts();renderTable('items');renderTable('repairs');grow(document);applySearch();$('today').textContent=show(today())}
@@ -438,7 +441,7 @@ function addRow(k){
 /* ---------- 검색 ---------- */
 function applySearch(){
   var q=$('q').value.trim().toLowerCase();
-  $('searchBox').classList.toggle('has',!!q);
+  $('searchBox').classList.toggle('has',!!q);document.body.classList.toggle('searching',!!q);
   var total=0;
   document.querySelectorAll('[data-id]').forEach(function(row){
     if(!q){row.style.display='';return}
@@ -448,8 +451,10 @@ function applySearch(){
   });
   document.querySelectorAll('.grp,.empty').forEach(function(r){r.style.display=q?'none':''});
   if(!q)['items','repairs'].forEach(function(k){if(!showDone[k])$(k).querySelectorAll('tr.dn').forEach(function(r){r.classList.add('hide')})});
+  ['secItems','secRepairs','secKeep','secContact'].forEach(function(id){var S=$(id),hit=false;
+    S.querySelectorAll('[data-id]').forEach(function(r){if(r.style.display!=='none')hit=true});S.classList.toggle('nohit',!!q&&!hit)});
   var si=$('sinfo');si.classList.toggle('on',!!q);
-  si.innerHTML=q?'"<b>'+esc(q)+'</b>" 검색 결과 '+total+'건 (해결된 것 포함) · <a href="#" id="sx">검색 지우기</a>':'';
+  si.innerHTML=q?'"<b>'+esc(q)+'</b>" 검색 결과 '+total+'건 (해결된 것 포함, 모든 칸에서 찾음) · <a href="#" id="sx">검색 지우기</a>':'';
   if(q){var x=$('sx');x.onclick=function(ev){ev.preventDefault();$('q').value='';applySearch()}}
   if(q)grow(document);
 }
@@ -513,15 +518,18 @@ $('bPrint').onclick=function(){window.print()};
 
 /* ---------- 시작 ---------- */
 load();render();window._c=1;counts();banner();
-/* 왼쪽 메뉴: 누르면 해당 칸으로, 스크롤하면 현재 칸 표시 */
-var navs=document.querySelectorAll('#nav a');
-navs.forEach(function(a){a.onclick=function(){$(a.getAttribute('data-go')).scrollIntoView({behavior:'smooth',block:'start'})}});
-function spy(){var cur='secItems',y=window.innerHeight*0.3;
-  ['secItems','secRepairs','secKeep','secContact'].forEach(function(id){if($(id).getBoundingClientRect().top<y)cur=id});
-  if(window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-4)cur='secKeep';
-  var pair=function(x){return x==='secKeep'||x==='secContact'};
-  navs.forEach(function(a){var g=a.getAttribute('data-go');a.classList.toggle('on',g===cur||(pair(g)&&pair(cur)))})}
-window.addEventListener('scroll',spy,{passive:true});spy();
+/* 왼쪽 메뉴 = 탭: 누른 칸 하나만 보여줌 */
+var navs=document.querySelectorAll('#nav a'),SECS=['secItems','secRepairs','secKeep','secContact'];
+function setTab(id){
+  if(SECS.indexOf(id)<0)id='secItems';
+  SECS.forEach(function(x){$(x).classList.toggle('off',x!==id)});
+  navs.forEach(function(a){a.classList.toggle('on',a.getAttribute('data-go')===id)});
+  try{localStorage.setItem(KEY+'-tab',id)}catch(e){}
+  window.scrollTo(0,0);grow($(id));
+}
+navs.forEach(function(a){a.onclick=function(){if($('q').value){$('q').value='';applySearch()}setTab(a.getAttribute('data-go'))}});
+var _tab='secItems';try{_tab=localStorage.getItem(KEY+'-tab')||_tab}catch(e){}
+setTab(_tab);
 var lastDay=today();setInterval(function(){if(today()!==lastDay){lastDay=today();render()}},60000);
 window.addEventListener('resize',function(){grow(document)});
 })();
