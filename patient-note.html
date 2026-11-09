@@ -1,0 +1,333 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>내 환자 파악 노트</title>
+<style>
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css");
+*{box-sizing:border-box}
+:root{--ink:#20242B;--bg:#F6F4EF;--line:#E0DCD2;--sub:#6E6A61;--acc:#D2691E}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Pretendard,sans-serif;font-size:15.5px;line-height:1.6;letter-spacing:-.015em;word-break:keep-all}
+main{max-width:600px;margin:0 auto;padding:18px 14px 110px}
+h1{font-size:1.3rem;font-weight:800;letter-spacing:-.035em;margin:0 0 6px;padding:16px;text-align:center;background:#fff;border:2px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink)}
+.priv{font-size:.8rem;color:var(--sub);text-align:center;margin:10px 4px 14px}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--ink);color:#fff;border:2px solid var(--ink);border-radius:10px;padding:9px 14px;font-weight:700}
+.btn.l{background:#fff;color:var(--ink)}
+.btn.r{background:#fff;color:#B33;border-color:#B33}
+.btn.s{padding:5px 10px;font-size:.85rem;border-width:1.5px}
+.bar{display:flex;gap:8px;margin-bottom:12px}
+.bar input{flex:1}
+input[type=text],input[type=number],textarea,select{font:inherit;width:100%;padding:9px 11px;border:1.5px solid #CFCABF;border-radius:9px;background:#fff;color:var(--ink)}
+textarea{min-height:70px;resize:vertical}
+input:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:-1px;border-color:transparent}
+
+/* list */
+.pt{background:#fff;border:2px solid var(--ink);border-radius:14px;padding:13px 14px;margin-bottom:11px;box-shadow:3px 3px 0 rgba(32,36,43,.18);cursor:pointer}
+.pt .top{display:flex;align-items:center;gap:8px}
+.bed{background:var(--ink);color:#fff;font-weight:800;font-size:.82rem;padding:2px 9px;border-radius:8px;flex:none}
+.pt .nm{font-weight:800;font-size:1.05rem;flex:1}
+.pt .as{color:var(--sub);font-weight:600;font-size:.9rem}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.tag{font-size:.78rem;font-weight:700;padding:2px 8px;border-radius:20px;background:#F0EDE6;color:#4A4E56}
+.tag.w{background:#FFE5D2;color:#A04A10}
+.tag.b{background:#E2ECFA;color:#2A5590}
+.tag.g{background:#E3F2E6;color:#2E6B3A}
+.pt .cc{font-size:.88rem;color:#4A4E56;margin-top:6px}
+.empty{background:#FFF9E3;border:1.5px solid #E8D98A;border-radius:10px;padding:14px;font-size:.92rem;text-align:center}
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;box-shadow:3px 3px 0 rgba(32,36,43,.25);padding:13px 26px;font-size:1rem;border-radius:30px;z-index:5}
+.foot{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:22px}
+
+/* form */
+.sec{background:#fff;border:2px solid var(--ink);border-radius:14px;padding:14px;margin-bottom:12px}
+.sec h2{font-size:.85rem;font-weight:800;margin:0 0 10px;background:var(--ink);color:#fff;display:inline-block;padding:3px 12px;border-radius:20px}
+.row{display:flex;gap:8px;margin-bottom:9px;align-items:center}
+.row>*{flex:1}
+.lab{font-size:.84rem;font-weight:700;color:#4A4E56;margin:10px 0 5px}
+.lab:first-of-type{margin-top:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid #CFCABF;background:#fff;color:var(--ink);border-radius:20px;padding:6px 13px;font-size:.9rem;font-weight:600}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.sub{background:#F8F6F1;border:1.5px dashed var(--line);border-radius:10px;padding:10px;margin-top:9px}
+.hide{display:none!important}
+.item{background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:9px;margin-bottom:8px}
+.item .x{background:none;border:0;color:#B33;font-weight:700;font-size:.85rem;padding:4px 2px;flex:none}
+.dev{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.dev .chip{flex:none;min-width:92px;text-align:center}
+.dev input{flex:1}
+.dev input:disabled{background:#F2F0EB;color:#aaa}
+.sticky{position:sticky;bottom:0;background:var(--bg);padding:10px 0 4px;display:flex;gap:8px;z-index:4}
+.sticky .btn{flex:1;padding:12px}
+
+/* view */
+.sum{background:#fff;border:2px solid var(--ink);border-radius:14px;padding:14px;box-shadow:3px 3px 0 rgba(32,36,43,.18)}
+.sum dl{margin:0;display:grid;grid-template-columns:76px 1fr;gap:7px 10px}
+.sum dt{font-size:.82rem;font-weight:800;color:var(--sub);padding-top:2px}
+.sum dd{margin:0;font-size:.95rem;white-space:pre-wrap}
+.toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:10px;font-size:.9rem;z-index:20;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+.upd{font-size:.76rem;color:#9A968D;text-align:right;margin-top:10px}
+</style></head><body><main>
+
+<!-- ===== 목록 ===== -->
+<section id="vList">
+  <h1>📝 내 환자 파악 노트</h1>
+  <div class="priv">🔒 입력한 내용은 <b>이 기기 브라우저에만</b> 저장돼요 (서버 전송 없음).<br>개인정보 보호를 위해 이름은 <b>홍○○</b>처럼 줄여 쓰는 걸 권장해요.</div>
+  <div class="bar"><input type="text" id="q" placeholder="🔍 이름·베드·증상 검색"></div>
+  <div id="list"></div>
+  <div class="foot">
+    <button class="btn l s" id="bCopyAll">전체 인계 텍스트 복사</button>
+    <button class="btn l s" id="bExport">백업 파일 저장</button>
+    <button class="btn l s" id="bImport">백업 불러오기</button>
+    <button class="btn r s" id="bWipe">전체 삭제</button>
+    <input type="file" id="fImport" accept=".json,application/json" class="hide">
+  </div>
+  <button class="btn fab" id="bAdd">＋ 환자 추가</button>
+</section>
+
+<!-- ===== 상세 보기 ===== -->
+<section id="vView" class="hide">
+  <div class="bar"><button class="btn l s" data-go="list">← 목록</button><span style="flex:1"></span>
+    <button class="btn l s" id="vCopy">복사</button><button class="btn s" id="vEdit">수정</button></div>
+  <div class="sum" id="sum"></div>
+</section>
+
+<!-- ===== 입력/수정 ===== -->
+<section id="vEditF" class="hide">
+  <div class="bar"><button class="btn l s" data-go="back">← 취소</button></div>
+
+  <div class="sec"><h2>기본 정보</h2>
+    <div class="row"><input type="text" id="f_bed" placeholder="베드/구역 (예: 3, A-2)" style="flex:.8"><input type="text" id="f_name" placeholder="이름 (예: 홍○○)"></div>
+    <div class="row"><input type="number" id="f_age" placeholder="나이" inputmode="numeric" style="flex:.7">
+      <div class="chips" data-k="sex" data-one><button class="chip" data-v="M">남</button><button class="chip" data-v="F">여</button></div></div>
+  </div>
+
+  <div class="sec"><h2>보호자</h2>
+    <div class="chips" data-k="gHas" data-one><button class="chip" data-v="y">있음</button><button class="chip" data-v="n">없음</button></div>
+    <div class="sub hide" id="gBox">
+      <div id="gList"></div>
+      <button class="btn l s" id="gAdd">＋ 보호자 추가</button>
+    </div>
+  </div>
+
+  <div class="sec"><h2>거동 · 욕창</h2>
+    <div class="lab">거동</div>
+    <div class="chips" data-k="mob" data-one>
+      <button class="chip" data-v="독립보행">독립보행</button><button class="chip" data-v="부축거동">부축거동</button>
+      <button class="chip" data-v="워커">워커</button><button class="chip" data-v="지팡이">지팡이</button>
+      <button class="chip" data-v="휠체어">휠체어</button><button class="chip" data-v="침상(bedridden)">침상(bedridden)</button></div>
+    <input type="text" id="f_mobNote" placeholder="거동 메모 (예: 낙상위험, 1인 부축)" style="margin-top:8px">
+    <div class="lab" style="margin-top:14px">욕창</div>
+    <div class="chips" data-k="soreHas" data-one><button class="chip" data-v="y">있음</button><button class="chip" data-v="n">없음</button></div>
+    <div class="sub hide" id="sBox">
+      <div id="sList"></div>
+      <button class="btn l s" id="sAdd">＋ 욕창 부위 추가</button>
+    </div>
+  </div>
+
+  <div class="sec"><h2>달고 있는 것</h2>
+    <div id="devs"></div>
+  </div>
+
+  <div class="sec"><h2>내원 경로</h2>
+    <div class="chips" data-k="route" data-one>
+      <button class="chip" data-v="직접">직접</button><button class="chip" data-v="진협">진협</button>
+      <button class="chip" data-v="MOU">MOU</button><button class="chip" data-v="기타">기타</button></div>
+    <div class="sub hide" id="rJin">
+      <div class="chips" data-k="routeFrom" data-one><button class="chip" data-v="병원">병원에서</button><button class="chip" data-v="집">집에서</button></div>
+      <input type="text" id="f_rJinTxt" placeholder="어느 병원 / 상세 (예: ○○병원 내과, 의뢰서 有)" style="margin-top:8px">
+    </div>
+    <div class="sub hide" id="rMou"><input type="text" id="f_rMouTxt" placeholder="어느 요양원 (예: ○○요양원)"></div>
+    <div class="sub hide" id="rEtc"><input type="text" id="f_rEtcTxt" placeholder="상세 (예: 119, 외래 경유)"></div>
+  </div>
+
+  <div class="sec"><h2>과거력</h2>
+    <div class="chips" data-k="pmh" id="pmhChips"></div>
+    <textarea id="f_pmhTxt" placeholder="기타 과거력 / 수술력 / 복용약 등" style="margin-top:8px"></textarea>
+  </div>
+
+  <div class="sec"><h2>현재 증상</h2>
+    <textarea id="f_cc" placeholder="증상 (예: 발열, 기침, 가래)"></textarea>
+    <input type="text" id="f_onset" placeholder="언제부터 (예: 11/7 저녁부터, 3일 전)" style="margin-top:8px">
+  </div>
+
+  <div class="sec"><h2>검사 결과 (특이사항)</h2>
+    <textarea id="f_lab" placeholder="예: WBC 15.2↑ CRP 12↑ / CXR Rt. LLL haziness / Cr 2.1"></textarea>
+  </div>
+
+  <div class="sec"><h2>기타</h2>
+    <textarea id="f_etc" placeholder="자유 메모 (주의사항, 할 일, 인계 내용 등)"></textarea>
+  </div>
+
+  <div class="sticky">
+    <button class="btn r hide" id="bDel" style="flex:.5">삭제</button>
+    <button class="btn" id="bSave">저장</button>
+  </div>
+</section>
+<div class="toast" id="toast"></div>
+</main>
+<script>
+(()=>{
+const KEY='nurse_pt_notes_v1';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const DEVS=[['foley','Foley'],['ltube','L-tube'],['dress','드레싱'],['iv','IV line'],['o2','O₂'],['trach','T-cannula'],['peg','PEG'],['etc','기타']];
+const DEV_PH={foley:'삽입일·size (예: 11/2, 16Fr)',ltube:'삽입일·위치 (예: 11/5, 55cm)',dress:'부위·방법 (예: Lt. 하지 폼드레싱)',iv:'부위·게이지 (예: Rt. 전완 22G)',o2:'방법·양 (예: NC 2L)',trach:'size·교체일',peg:'삽입일·상태',etc:'무엇인지 적기'};
+const PMH=['HTN','DM','Dyslipidemia','CVA','치매','파킨슨','CKD','HF','Afib','COPD','Cancer','결핵'];
+const REL=['배우자','아들','딸','며느리','사위','손자녀','형제자매','기타'];
+const SITE=['천골','미골','좌 둔부','우 둔부','좌 발뒤꿈치','우 발뒤꿈치','좌 대전자','우 대전자','기타'];
+const STAGE=['1단계','2단계','3단계','4단계','미분류','DTI'];
+
+let data=[];
+try{data=JSON.parse(localStorage.getItem(KEY)||'[]');if(!Array.isArray(data))data=[]}catch(e){data=[]}
+const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(data));return true}catch(e){toast('⚠️ 저장 실패 (브라우저 저장소 사용 불가)');return false}};
+let cur=null, prevView='list';
+
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('on'),1600)}
+function show(v){['vList','vView','vEditF'].forEach(id=>$('#'+id).classList.toggle('hide',id!==v));scrollTo(0,0)}
+
+/* ---------- chips ---------- */
+document.addEventListener('click',e=>{
+  const c=e.target.closest('.chip');if(!c)return;
+  const g=c.parentElement;if(!g.classList.contains('chips'))return;
+  e.preventDefault();
+  if(g.hasAttribute('data-one')){const was=c.classList.contains('on');g.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));if(!was)c.classList.add('on')}
+  else c.classList.toggle('on');
+  g.dispatchEvent(new Event('chg',{bubbles:true}));
+});
+const getChip=k=>{const g=$(`.chips[data-k="${k}"]`);const on=[...g.querySelectorAll('.chip.on')].map(x=>x.dataset.v);return g.hasAttribute('data-one')?(on[0]||''):on};
+const setChip=(k,v)=>{const g=$(`.chips[data-k="${k}"]`);const arr=Array.isArray(v)?v:[v];g.querySelectorAll('.chip').forEach(x=>x.classList.toggle('on',arr.includes(x.dataset.v)));g.dispatchEvent(new Event('chg',{bubbles:true}))};
+
+/* static builds */
+$('#pmhChips').innerHTML=PMH.map(p=>`<button class="chip" data-v="${p}">${p}</button>`).join('');
+$('#devs').innerHTML=DEVS.map(([k,n])=>`<div class="dev"><div class="chips" data-k="dev_${k}"><button class="chip" data-v="1">${n}</button></div><input type="text" id="dn_${k}" placeholder="${DEV_PH[k]}" disabled></div>`).join('');
+
+document.addEventListener('chg',e=>{
+  const k=e.target.dataset.k;
+  if(k==='gHas'){$('#gBox').classList.toggle('hide',getChip('gHas')!=='y');if(getChip('gHas')==='y'&&!$('#gList').children.length)addG()}
+  if(k==='soreHas'){$('#sBox').classList.toggle('hide',getChip('soreHas')!=='y');if(getChip('soreHas')==='y'&&!$('#sList').children.length)addS()}
+  if(k==='route'){const r=getChip('route');$('#rJin').classList.toggle('hide',r!=='진협');$('#rMou').classList.toggle('hide',r!=='MOU');$('#rEtc').classList.toggle('hide',r!=='기타')}
+  if(k&&k.startsWith('dev_')){const id=k.slice(4),on=getChip(k).length>0,i=$('#dn_'+id);i.disabled=!on}
+});
+
+/* guardian / sore rows */
+function addG(v={}){
+  const d=document.createElement('div');d.className='item g';
+  d.innerHTML=`<div class="row" style="margin:0 0 6px"><select class="rel">${REL.map(r=>`<option${r===v.rel?' selected':''}>${r}</option>`).join('')}</select><button class="x" type="button">✕ 삭제</button></div>
+  <input type="text" class="gn" placeholder="메모 (예: 상주, 주보호자, 연락처 등)" value="${esc(v.note)}">`;
+  d.querySelector('.x').onclick=()=>d.remove();$('#gList').appendChild(d);
+}
+function addS(v={}){
+  const d=document.createElement('div');d.className='item s';
+  d.innerHTML=`<div class="row" style="margin:0 0 6px"><select class="site">${SITE.map(r=>`<option${r===v.site?' selected':''}>${r}</option>`).join('')}</select>
+  <select class="stage">${STAGE.map(r=>`<option${r===v.stage?' selected':''}>${r}</option>`).join('')}</select><button class="x" type="button">✕</button></div>
+  <input type="text" class="sn" placeholder="크기·상태·드레싱 (예: 3x2cm, 폼드레싱 q2d)" value="${esc(v.note)}">`;
+  d.querySelector('.x').onclick=()=>d.remove();$('#sList').appendChild(d);
+}
+$('#gAdd').onclick=()=>addG();$('#sAdd').onclick=()=>addS();
+
+/* ---------- form <-> data ---------- */
+const blank=()=>({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),bed:'',name:'',age:'',sex:'',
+  gHas:'',guards:[],mob:'',mobNote:'',soreHas:'',sores:[],devs:{},route:'',routeFrom:'',routeTxt:'',
+  pmh:[],pmhTxt:'',cc:'',onset:'',lab:'',etc:'',upd:0});
+
+function fill(p){
+  $('#f_bed').value=p.bed;$('#f_name').value=p.name;$('#f_age').value=p.age;setChip('sex',p.sex);
+  $('#gList').innerHTML='';(p.guards||[]).forEach(addG);setChip('gHas',p.gHas);
+  setChip('mob',p.mob);$('#f_mobNote').value=p.mobNote||'';
+  $('#sList').innerHTML='';(p.sores||[]).forEach(addS);setChip('soreHas',p.soreHas);
+  DEVS.forEach(([k])=>{const d=(p.devs||{})[k];$('#dn_'+k).value=d?d.note||'':'';setChip('dev_'+k,d?['1']:[])});
+  setChip('route',p.route);setChip('routeFrom',p.routeFrom||'');
+  ['#f_rJinTxt','#f_rMouTxt','#f_rEtcTxt'].forEach(s=>$(s).value='');
+  if(p.route==='진협')$('#f_rJinTxt').value=p.routeTxt;if(p.route==='MOU')$('#f_rMouTxt').value=p.routeTxt;if(p.route==='기타')$('#f_rEtcTxt').value=p.routeTxt;
+  setChip('pmh',p.pmh||[]);$('#f_pmhTxt').value=p.pmhTxt||'';
+  $('#f_cc').value=p.cc;$('#f_onset').value=p.onset;$('#f_lab').value=p.lab;$('#f_etc').value=p.etc;
+}
+function collect(p){
+  const v=s=>$(s).value.trim();
+  Object.assign(p,{bed:v('#f_bed'),name:v('#f_name'),age:v('#f_age'),sex:getChip('sex'),
+    gHas:getChip('gHas'),guards:getChip('gHas')==='y'?$$('#gList .g').map(d=>({rel:d.querySelector('.rel').value,note:d.querySelector('.gn').value.trim()})):[],
+    mob:getChip('mob'),mobNote:v('#f_mobNote'),
+    soreHas:getChip('soreHas'),sores:getChip('soreHas')==='y'?$$('#sList .s').map(d=>({site:d.querySelector('.site').value,stage:d.querySelector('.stage').value,note:d.querySelector('.sn').value.trim()})):[],
+    devs:Object.fromEntries(DEVS.filter(([k])=>getChip('dev_'+k).length).map(([k])=>[k,{note:v('#dn_'+k)}])),
+    route:getChip('route'),routeFrom:getChip('route')==='진협'?getChip('routeFrom'):'',
+    routeTxt:({'진협':v('#f_rJinTxt'),'MOU':v('#f_rMouTxt'),'기타':v('#f_rEtcTxt')})[getChip('route')]||'',
+    pmh:getChip('pmh'),pmhTxt:v('#f_pmhTxt'),cc:v('#f_cc'),onset:v('#f_onset'),lab:v('#f_lab'),etc:v('#f_etc'),upd:Date.now()});
+  return p;
+}
+
+/* ---------- text helpers ---------- */
+const devName=k=>(DEVS.find(d=>d[0]===k)||[])[1]||k;
+const fmt={
+  head:p=>[p.bed?`[${p.bed}]`:'',p.name||'(이름 없음)',[p.age,{M:'M',F:'F'}[p.sex]].filter(Boolean).join('/')].filter(Boolean).join(' '),
+  guard:p=>p.gHas==='n'?'없음':p.gHas==='y'?(p.guards.length?p.guards.map(g=>g.rel+(g.note?`(${g.note})`:'')).join(', '):'있음'):'',
+  mob:p=>[p.mob,p.mobNote].filter(Boolean).join(' - '),
+  sore:p=>p.soreHas==='n'?'없음':p.soreHas==='y'?(p.sores.length?p.sores.map(s=>`${s.site} ${s.stage}${s.note?` (${s.note})`:''}`).join(' / '):'있음'):'',
+  devs:p=>Object.entries(p.devs||{}).map(([k,d])=>devName(k)+(d.note?`(${d.note})`:'')).join(', '),
+  route:p=>!p.route?'':p.route==='진협'?['진협',p.routeFrom&&(p.routeFrom+'에서'),p.routeTxt].filter(Boolean).join(' - '):[p.route,p.routeTxt].filter(Boolean).join(' - '),
+  pmh:p=>[(p.pmh||[]).join(', '),p.pmhTxt].filter(Boolean).join(' / '),
+  cc:p=>[p.cc,p.onset&&`(${p.onset}~)`].filter(Boolean).join(' '),
+};
+const ROWS=[['보호자',fmt.guard],['거동',fmt.mob],['욕창',fmt.sore],['라인 등',fmt.devs],['내원 경로',fmt.route],['과거력',fmt.pmh],['현재 증상',fmt.cc],['검사',p=>p.lab],['기타',p=>p.etc]];
+const toText=p=>[fmt.head(p),...ROWS.map(([n,f])=>{const t=f(p);return t?`${n}: ${t}`:''}).filter(Boolean)].join('\n');
+
+/* ---------- render ---------- */
+const bedKey=b=>{const m=String(b).match(/\d+/);return [m?+m[0]:1e9,String(b)]};
+function renderList(){
+  const q=$('#q').value.trim().toLowerCase();
+  const arr=data.filter(p=>!q||toText(p).toLowerCase().includes(q))
+    .sort((a,b)=>{const x=bedKey(a.bed),y=bedKey(b.bed);return x[0]-y[0]||x[1].localeCompare(y[1])});
+  const L=$('#list');
+  if(!data.length){L.innerHTML='<div class="empty">아직 등록된 환자가 없어요.<br>아래 <b>＋ 환자 추가</b>를 눌러 시작하세요.</div>';return}
+  if(!arr.length){L.innerHTML='<div class="empty">검색 결과가 없어요.</div>';return}
+  L.innerHTML=arr.map(p=>{
+    const tags=[];
+    if(p.mob)tags.push(`<span class="tag b">${esc(p.mob)}</span>`);
+    if(p.soreHas==='y')tags.push(`<span class="tag w">욕창 ${p.sores.length?esc(p.sores.map(s=>s.site).join('·')):''}</span>`);
+    Object.keys(p.devs||{}).forEach(k=>tags.push(`<span class="tag w">${esc(devName(k))}</span>`));
+    if(p.gHas==='y')tags.push(`<span class="tag g">보호자 ${esc(p.guards.map(g=>g.rel).join('·'))}</span>`);
+    if(p.gHas==='n')tags.push(`<span class="tag">보호자 없음</span>`);
+    if(p.route)tags.push(`<span class="tag">${esc(p.route)}</span>`);
+    return `<div class="pt" data-id="${p.id}"><div class="top">${p.bed?`<span class="bed">${esc(p.bed)}</span>`:''}<span class="nm">${esc(p.name||'(이름 없음)')}</span>
+      <span class="as">${esc([p.age,{M:'남',F:'여'}[p.sex]].filter(Boolean).join(' / '))}</span></div>
+      ${tags.length?`<div class="tags">${tags.join('')}</div>`:''}${p.cc?`<div class="cc">🩺 ${esc(fmt.cc(p))}</div>`:''}</div>`}).join('');
+}
+function renderView(p){
+  $('#sum').innerHTML=`<div style="font-weight:800;font-size:1.15rem;margin-bottom:12px">${esc(fmt.head(p))}</div><dl>`+
+    ROWS.map(([n,f])=>{const t=f(p);return `<dt>${n}</dt><dd>${t?esc(t):'<span style="color:#bbb">-</span>'}</dd>`}).join('')+
+    `</dl><div class="upd">마지막 수정 ${new Date(p.upd).toLocaleString('ko-KR')}</div>`;
+}
+
+/* ---------- actions ---------- */
+function openView(id){cur=data.find(p=>p.id===id);if(!cur)return;renderView(cur);show('vView')}
+function openEdit(p,isNew){cur=p;fill(p);$('#bDel').classList.toggle('hide',!!isNew);prevView=isNew?'list':'view';show('vEditF');if(isNew)$('#f_bed').focus()}
+$('#list').onclick=e=>{const c=e.target.closest('.pt');if(c)openView(c.dataset.id)};
+$('#bAdd').onclick=()=>openEdit(blank(),true);
+$('#vEdit').onclick=()=>openEdit(cur,false);
+$$('[data-go]').forEach(b=>b.onclick=()=>{
+  if(b.dataset.go==='back'&&prevView==='view'&&data.includes(cur)){renderView(cur);show('vView')}else{renderList();show('vList')}
+});
+$('#bSave').onclick=()=>{
+  collect(cur);
+  if(!cur.name&&!cur.bed){toast('베드나 이름 중 하나는 적어주세요');return}
+  if(!data.includes(cur))data.push(cur);
+  if(persist())toast('저장했어요');renderView(cur);show('vView');
+};
+$('#bDel').onclick=()=>{if(!confirm(`${fmt.head(cur)} 환자를 삭제할까요?`))return;data=data.filter(p=>p!==cur);persist();renderList();show('vList');toast('삭제했어요')};
+async function copy(t){try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove()}toast('복사했어요')}
+$('#vCopy').onclick=()=>copy(toText(cur));
+$('#bCopyAll').onclick=()=>{if(!data.length)return toast('환자가 없어요');copy([...data].sort((a,b)=>bedKey(a.bed)[0]-bedKey(b.bed)[0]).map(toText).join('\n\n'))};
+$('#q').oninput=renderList;
+$('#bWipe').onclick=()=>{if(!data.length)return;if(!confirm('모든 환자 기록을 삭제할까요?\n(근무 끝나면 정리용)'))return;data=[];persist();renderList();toast('전체 삭제했어요')};
+$('#bExport').onclick=()=>{
+  const b=new Blob([JSON.stringify(data,null,1)],{type:'application/json'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b);a.download='환자노트_'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
+$('#bImport').onclick=()=>$('#fImport').click();
+$('#fImport').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f)return;
+  try{const arr=JSON.parse(await f.text());if(!Array.isArray(arr))throw 0;
+    const ids=new Set(data.map(p=>p.id));let n=0;
+    arr.forEach(p=>{if(p&&p.id&&!ids.has(p.id)){data.push(Object.assign(blank(),p));n++}});
+    persist();renderList();toast(`${n}명 불러왔어요`)}catch(err){toast('⚠️ 올바른 백업 파일이 아니에요')}
+};
+renderList();
+})();
+</script></body></html>
