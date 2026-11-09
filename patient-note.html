@@ -71,6 +71,20 @@ svg{display:block;flex:none}
 .tag:not(:last-child)::after{content:"·";margin:0 6px;color:var(--mute)}
 .tag.m{color:var(--ink2)}
 .pt .cc{font-size:12px;color:var(--mute);margin:3px 0 0 32px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pt.done{opacity:.5}
+.pt.done:hover{opacity:.85}
+.pt.done.sel{opacity:1}
+.dtag{font-size:11.5px;color:var(--ink2);border:1px solid var(--rule);border-radius:3px;padding:0 6px;margin-left:6px;font-family:var(--sans);font-weight:500;flex:none}
+.grp{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;border-bottom:1px solid var(--ink);padding:22px 0 8px;margin-top:6px;font-family:var(--serif);font-size:13.5px;font-weight:600;color:var(--ink2);text-align:left}
+.grp .n{color:var(--sub);font-weight:400;font-size:13px}
+.grp svg{margin-left:auto;color:var(--sub);transition:transform .15s}
+.grp.closed svg{transform:rotate(-90deg)}
+.dispo{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--hair)}
+.dispo .dl{font-size:12px;color:var(--sub);margin-right:4px}
+.dispo .st{font-family:var(--serif);font-weight:600;font-size:15px;color:var(--ink)}
+.dispo .sd{font-size:13.5px;color:var(--sub)}
+.dispo input{flex:1;min-width:160px;max-width:320px}
+.dispo .rb{margin-left:auto}
 .empty{padding:34px 0;text-align:center;color:var(--sub);font-size:13px;line-height:1.8;font-family:var(--serif)}
 
 /* ---------- controls ---------- */
@@ -209,7 +223,7 @@ textarea:focus{background-image:repeating-linear-gradient(to bottom,transparent 
     <div class="dd hide" id="dd">
       <button id="bExport"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>백업 파일 저장</button>
       <button id="bImport"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V9M7 14l5-5 5 5M5 4h14"/></svg>백업 불러오기</button>
-      <hr><button id="bWipe" class="danger"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>전체 삭제</button>
+      <hr><button id="bClearDone"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l4 4L19 6"/></svg>입원·퇴원 환자 정리</button><button id="bWipe" class="danger"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>전체 삭제</button>
     </div>
   </div>
   <input type="file" id="fImport" accept=".json,application/json" class="hide">
@@ -219,7 +233,7 @@ textarea:focus{background-image:repeating-linear-gradient(to bottom,transparent 
 <aside id="side">
   <div class="sidehead">
     <div class="search"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg><input type="text" id="q" placeholder="이름·베드·증상 검색"></div>
-    <div class="cnt"><span>환자 목록</span><span id="cnt">0</span></div>
+    <div class="cnt"><span>진료 중</span><span id="cnt">0</span></div>
   </div>
   <div id="list"></div>
   <div class="priv">입력 내용은 이 기기 브라우저에만 저장돼요 (서버 전송 없음). 이름은 홍○○처럼 줄여 쓰는 걸 권장해요.</div>
@@ -325,6 +339,8 @@ textarea:focus{background-image:repeating-linear-gradient(to bottom,transparent 
 <script>
 (()=>{
 const KEY='nurse_pt_notes_v1';
+const CHEV='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>';
+const DISPO=['입원','퇴원','전원'];
 const SVG=(d,w=15)=>`<svg width="${w}" height="${w}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const IX=SVG('<path d="M6 6l12 12M18 6L6 18"/>',14), INOTE=SVG('<path d="M5 4h14v11l-5 5H5z"/><path d="M14 20v-5h5"/>',13), IPLUS=SVG('<path d="M12 5v14M5 12h14"/>',13);
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
@@ -462,6 +478,7 @@ function collect(p){
 /* ---------- text helpers ---------- */
 const fmt={
   head:p=>[p.bed?`[${p.bed}]`:'',p.name||'(이름 없음)',[p.age,{M:'M',F:'F'}[p.sex]].filter(Boolean).join('/')].filter(Boolean).join(' '),
+  dispo:p=>p.dispo?[p.dispo.t,p.dispo.dest,hm(p.dispo.at)].filter(Boolean).join(' · '):'',
   guard:p=>p.gHas==='n'?'없음':p.gHas==='y'?(p.guards.length?p.guards.map(g=>{const x=[g.stay,g.tel,g.note].filter(Boolean).join(' · ');return g.rel+(x?` (${x})`:'')}).join(', '):'있음'):'',
   mob:p=>[p.mob,p.mobNote].filter(Boolean).join(' - '),
   sore:p=>p.soreHas==='n'?'없음':p.soreHas==='y'?(p.sores.length?p.sores.map(s=>`${s.site} ${s.stage}${s.note?` (${s.note})`:''}`).join(' / '):'있음'):'',
@@ -473,8 +490,9 @@ const ROWS=[['보호자',fmt.guard,'guard'],['거동',fmt.mob,'mob'],['욕창',f
 const memo=(p,k)=>((p.memos||{})[k]||'').trim();
 const memoLine=(p,k)=>memo(p,k)?'  └ 메모: '+memo(p,k).replace(/\n/g,'\n          '):'';
 const rowsFor=(p,k)=>k==='dev'?((p.lines||[]).length?p.lines.map(x=>[devName(x),devDetail(x)]):[['라인 등','']]):ROWS.filter(r=>r[2]===k).map(([n,f])=>[n,f(p)]);
+const hm=t=>{if(!t)return '';const d=new Date(t);return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`};
 const toText=p=>{
-  const out=[fmt.head(p),memoLine(p,'basic')];
+  const out=[fmt.head(p)+(p.dispo?`  → ${fmt.dispo(p)}`:''),memoLine(p,'basic')];
   SECS.slice(1).forEach(([k])=>{const rs=rowsFor(p,k);
     if(k==='dev'&&p.lines.length)out.push('라인 등:',...p.lines.map(x=>`- ${devName(x)}${devDetail(x)?' '+devDetail(x):''}`));
     else if(k!=='dev')rs.forEach(([n,t])=>{if(t)out.push(`${n}: ${t}`)});
@@ -487,10 +505,10 @@ function renderList(){
   const q=$('#q').value.trim().toLowerCase();
   const arr=data.filter(p=>!q||toText(p).toLowerCase().includes(q))
     .sort((a,b)=>{const x=bedKey(a.bed),y=bedKey(b.bed);return x[0]-y[0]||x[1].localeCompare(y[1])});
-  const L=$('#list');$('#cnt').textContent=data.length;
+  const L=$('#list');$('#cnt').textContent=data.filter(p=>!p.dispo).length;
   if(!data.length){L.innerHTML='<div class="empty">아직 등록된 환자가 없어요.<br>오른쪽 위 <b>환자 추가</b>로 시작하세요.</div>';return}
   if(!arr.length){L.innerHTML='<div class="empty">검색 결과가 없어요.</div>';return}
-  L.innerHTML=arr.map(p=>{
+  const card=p=>{
     const tags=[];
     if(p.mob)tags.push(`<span class="tag b">${esc(p.mob)}</span>`);
     if(p.soreHas==='y')tags.push(`<span class="tag w">욕창 ${p.sores.length?esc(p.sores.map(s=>s.site).join('·')):''}</span>`);
@@ -500,16 +518,38 @@ function renderList(){
     if(p.route)tags.push(`<span class="tag">${esc(p.route)}</span>`);
     if(Object.values(p.memos||{}).some(Boolean))tags.push(`<span class="tag m">메모 ${Object.values(p.memos).filter(Boolean).length}</span>`);
     const sel=p===cur&&document.body.dataset.view!=='list';
-    return `<div class="pt${sel?' sel':''}" data-id="${p.id}"><div class="top">${p.bed?`<span class="bed">${esc(p.bed)}</span>`:''}<span class="nm">${esc(p.name||'(이름 없음)')}</span>
+    return `<div class="pt${sel?' sel':''}${p.dispo?' done':''}" data-id="${p.id}"><div class="top">${p.bed?`<span class="bed">${esc(p.bed)}</span>`:''}<span class="nm">${esc(p.name||'(이름 없음)')}</span>${p.dispo?`<span class="dtag">${esc(p.dispo.t)}</span>`:''}
       <span class="as">${esc([p.age,{M:'남',F:'여'}[p.sex]].filter(Boolean).join(' / '))}</span></div>
-      ${tags.length?`<div class="tags">${tags.join('')}</div>`:''}${p.cc?`<div class="cc">${esc(fmt.cc(p))}</div>`:''}</div>`}).join('');
+      ${tags.length?`<div class="tags">${tags.join('')}</div>`:''}${p.cc?`<div class="cc">${esc(fmt.cc(p))}</div>`:''}</div>`};
+  const act=arr.filter(p=>!p.dispo),done=arr.filter(p=>p.dispo).sort((a,b)=>(b.dispo.at||0)-(a.dispo.at||0));
+  let open=true;try{open=localStorage.getItem('pt_done_open')!=='0'}catch(e){}
+  L.innerHTML=(act.length?act.map(card).join(''):'<div class="empty">진료 중인 환자가 없어요.</div>')+
+    (done.length?`<button type="button" class="grp${open?'':' closed'}" id="grpDone">입원 · 퇴원 · 전원 <span class="n">${done.length}명</span>${CHEV}</button><div id="doneBox"${open?'':' class="hide"'}>${done.map(card).join('')}</div>`:'');
+  const g=$('#grpDone');if(g)g.onclick=e=>{e.stopPropagation();const o=$('#doneBox').classList.toggle('hide');g.classList.toggle('closed',o);try{localStorage.setItem('pt_done_open',o?'0':'1')}catch(e){}};
+}
+function dispoBar(p){
+  const d=document.createElement('div');d.className='dispo';
+  const draw=()=>{
+    if(p.dispo){d.innerHTML=`<span class="st">${esc(p.dispo.t)}</span><span class="sd">${esc([p.dispo.dest,hm(p.dispo.at)].filter(Boolean).join(' · '))}</span><button type="button" class="btn l s rb">진료 중으로 되돌리기</button>`;
+      d.querySelector('.rb').onclick=()=>{delete p.dispo;persist();renderView(p);renderList();toast('진료 중으로 되돌렸어요')};return}
+    d.innerHTML=`<span class="dl">처리</span>`+DISPO.map(t=>`<button type="button" class="btn l s" data-t="${t}">${t}</button>`).join('');
+    d.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>ask(b.dataset.t));
+  };
+  const ask=t=>{
+    d.innerHTML=`<span class="st">${t}</span><input type="text" placeholder="${t==='입원'?'어디로 (예: 내과 72병동, ICU)':t==='전원'?'어느 병원 (예: ○○대학병원)':'메모 (예: 귀가, 외래 f/u)'}"><button type="button" class="btn s ok">확인</button><button type="button" class="btn l s no">취소</button>`;
+    const i=d.querySelector('input');i.focus();
+    const ok=()=>{p.dispo={t,dest:i.value.trim(),at:Date.now()};persist();renderView(p);renderList();toast(`${t} 처리했어요 · 목록 아래로 이동`)};
+    d.querySelector('.ok').onclick=ok;i.onkeydown=e=>{if(e.key==='Enter')ok();if(e.key==='Escape')draw()};
+    d.querySelector('.no').onclick=draw;
+  };
+  draw();return d;
 }
 function renderView(p){
   const S=$('#sum');S.innerHTML='';S.className='';
   SECS.forEach(([k,title])=>{
     const sec=document.createElement('div');sec.className='sec';
     if(k==='basic'){const meta=[p.age&&p.age+'세',{M:'남',F:'여'}[p.sex],'수정 '+new Date(p.upd).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})].filter(Boolean).map(esc).join('<i>·</i>');
-      sec.innerHTML=`<div class="phead"><div class="eyebrow">${p.bed?`No. ${esc(p.bed)}`:'베드 미지정'}</div><div class="pn">${esc(p.name||'(이름 없음)')}</div><div class="meta">${meta}</div></div>`;}
+      sec.innerHTML=`<div class="phead"><div class="eyebrow">${p.bed?`No. ${esc(p.bed)}`:'베드 미지정'}</div><div class="pn">${esc(p.name||'(이름 없음)')}</div><div class="meta">${meta}</div></div>`;sec.querySelector('.phead').appendChild(dispoBar(p));}
     else{const rs=rowsFor(p,k);
       if(!rs.some(r=>r[1])&&!memo(p,k)){sec.classList.add('esec');sec.innerHTML=`<h2>${title}</h2><span class="et">미입력 · 눌러서 입력</span>`;sec.onclick=e=>{if(!e.target.closest('.mbtn'))openEdit(p,false)}}
       else sec.innerHTML=`<h2>${title}</h2><dl class="${k==='dev'?'lines':''}">`+rs.map(([n,t])=>`<dt>${esc(n)}</dt><dd>${!t?'<span style="color:#bbb">-</span>':k==='dev'?t.split(' · ').map(x=>esc(x).replace(/\((D\+\d+)\)/,'<span class="dn">$1</span>')).join('<span class="sep">/</span>'):esc(t)}</dd>`).join('')+'</dl>';}
@@ -557,8 +597,14 @@ $('#bSave').onclick=()=>{
 $('#bDel').onclick=()=>{if(!confirm(`${fmt.head(cur)} 환자를 삭제할까요?`))return;data=data.filter(p=>p!==cur);cur=null;persist();show('list');toast('삭제했어요')};
 async function copy(t){try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove()}toast('복사했어요')}
 $('#vCopy').onclick=()=>copy(toText(cur));
-$('#bCopyAll').onclick=()=>{if(!data.length)return toast('환자가 없어요');copy([...data].sort((a,b)=>bedKey(a.bed)[0]-bedKey(b.bed)[0]).map(toText).join('\n\n'))};
+$('#bCopyAll').onclick=()=>{if(!data.length)return toast('환자가 없어요');
+  const srt=a=>[...a].sort((a,b)=>bedKey(a.bed)[0]-bedKey(b.bed)[0]);
+  const act=srt(data.filter(p=>!p.dispo)),done=srt(data.filter(p=>p.dispo));
+  copy([act.map(toText).join('\n\n'),done.length?'── 입원 · 퇴원 · 전원 ──\n'+done.map(p=>`${fmt.head(p)}  → ${fmt.dispo(p)}`).join('\n'):''].filter(Boolean).join('\n\n'))};
 $('#q').oninput=renderList;
+$('#bClearDone').onclick=()=>{const n=data.filter(p=>p.dispo).length;if(!n)return toast('정리할 환자가 없어요');
+  if(!confirm(`입원·퇴원·전원 처리된 ${n}명을 삭제할까요?\n(진료 중인 환자는 그대로 남아요)`))return;
+  if(cur&&cur.dispo){cur=null;show('list')}data=data.filter(p=>!p.dispo);persist();renderList();toast(`${n}명 정리했어요`)};
 $('#bWipe').onclick=()=>{if(!data.length)return;if(!confirm('모든 환자 기록을 삭제할까요?\n(근무 끝나면 정리용)'))return;data=[];persist();renderList();toast('전체 삭제했어요')};
 $('#bExport').onclick=()=>{
   const b=new Blob([JSON.stringify(data,null,1)],{type:'application/json'}),a=document.createElement('a');
