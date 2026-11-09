@@ -1,8 +1,9 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><title>환자 파악 노트</title>
+<!-- 글꼴: 인터넷이 되면 받아오고, 막혀 있으면 기다리지 않고 컴퓨터 기본 글꼴(바탕/맑은 고딕)로 바로 표시 -->
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">
 <style>
-@import url("https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap");
-@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css");
 *{box-sizing:border-box}
 :root{
   --desk:#EFEBE2;--paper:#FBF9F3;--side:#F5F1E8;
@@ -10,7 +11,7 @@
   --line:#E3DED2;--rule:#D2CCBE;--hair:#ECE7DC;
   --ribbon:#9E3B2F;--red:#9E3B2F;
   --memo:#F4EEDC;--memo-b:#E2D8BC;
-  --serif:"Noto Serif KR","Nanum Myeongjo",serif;
+  --serif:"Noto Serif KR","Nanum Myeongjo","나눔명조","Batang","바탕","AppleMyungjo",serif;
   --sans:Pretendard,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   --top:58px}
 html,body{margin:0}
@@ -146,6 +147,7 @@ textarea:focus{background-image:repeating-linear-gradient(to bottom,transparent 
 #vView .sec.esec h2{margin:0;color:var(--mute);font-weight:500}
 #vView .sec.esec .et{font-size:12.5px;color:#C6C0B2}
 #vView .sec.esec:hover h2{color:var(--sub)}
+#vView .sec.esec .mbtn{top:15px}
 .welcome{text-align:center;padding:140px 20px;color:var(--sub)}
 .welcome h3{font-family:var(--serif);color:var(--ink);font-size:21px;font-weight:600;margin:0 0 8px;letter-spacing:-.02em}
 .welcome p{margin:0 0 24px;font-size:14px}
