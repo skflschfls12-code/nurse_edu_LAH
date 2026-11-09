@@ -65,6 +65,23 @@ input:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:-1px;bord
 .toast.on{opacity:1}
 .upd{font-size:.76rem;color:#9A968D;text-align:right;margin-top:10px}
 
+/* devices */
+.addb{border:1.5px dashed #9A968D;background:#fff;color:var(--ink);border-radius:20px;padding:6px 12px;font-size:.88rem;font-weight:700}
+.addb:active{background:#F0EDE6}
+.dv{background:#fff;border:1.5px solid var(--ink);border-radius:12px;padding:10px 11px;margin-top:10px}
+.dv .dh{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.dv .dh b{font-size:.95rem;background:#FFE5D2;color:#A04A10;padding:2px 10px;border-radius:8px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:7px 8px}
+.fg label{display:block;font-size:.76rem;font-weight:700;color:var(--sub)}
+.fg label.w{grid-column:1/-1}
+.fg input{margin-top:2px;padding:7px 9px;width:100%;display:block;font:inherit;border:1.5px solid #CFCABF;border-radius:9px;background:#fff;color:var(--ink);min-height:38px}
+.unit{position:relative}.unit input{padding-right:34px}.unit span{position:absolute;right:10px;bottom:8px;font-size:.82rem;color:var(--sub);font-weight:700}
+.dday{font-size:.72rem;font-weight:800;color:#2A5590;margin-left:4px}
+#vView .sec.esec{border:1.5px dashed #CFCABF;padding:9px 14px;cursor:pointer}
+#vView .sec.esec h2{background:#E5E1D8;color:#6E6A61;margin:0}
+#vView .sec.esec .et{font-size:.82rem;color:#9A968D;margin-left:8px}
+#vView .lines dd{display:flex;flex-direction:column;gap:2px}
+
 /* post-it memo */
 .sec{position:relative}
 .secwrap>.sec{margin-bottom:12px}
@@ -145,7 +162,9 @@ input:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:-1px;bord
   </div>
 
   <div class="sec"><h2>달고 있는 것</h2>
-    <div id="devs"></div>
+    <div class="lab" style="margin-top:4px">눌러서 추가 (같은 것 여러 개 가능)</div>
+    <div id="devAdd" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    <div id="devList"></div>
   </div>
 
   <div class="sec"><h2>내원 경로</h2>
@@ -190,8 +209,27 @@ input:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:-1px;bord
 const KEY='nurse_pt_notes_v1';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
-const DEVS=[['foley','Foley'],['ltube','L-tube'],['dress','드레싱'],['iv','IV line'],['o2','O₂'],['trach','T-cannula'],['peg','PEG'],['etc','기타']];
-const DEV_PH={foley:'삽입일·size (예: 11/2, 16Fr)',ltube:'삽입일·위치 (예: 11/5, 55cm)',dress:'부위·방법 (예: Lt. 하지 폼드레싱)',iv:'부위·게이지 (예: Rt. 전완 22G)',o2:'방법·양 (예: NC 2L)',trach:'size·교체일',peg:'삽입일·상태',etc:'무엇인지 적기'};
+const DT={
+ foley:{n:'Foley',f:[['fr','Fr','num'],['date','삽입일','date'],['note','메모','w','교체 예정, 소변 양상 등']]},
+ ltube:{n:'L-tube',f:[['fr','Fr','num'],['cm','고정 길이','num'],['date','삽입일','date'],['feed','피딩','w','예: 뉴케어 200cc tid, 30분 이상 천천히'],['note','메모','w','위치 확인, 잔류량 등']]},
+ pcd:{n:'PCD',f:[['site','위치','w','예: Rt. 담낭, 간농양'],['fr','Fr','num'],['date','삽입일','date'],['dress','드레싱일','date'],['drain','배액','text','예: 갈색 50cc/d'],['note','메모','w','']]},
+ dress:{n:'드레싱',f:[['site','부위','w','예: 천골, Lt. 하지 수술부위'],['how','방법/재료','text','예: 폼, 거즈'],['cycle','주기','text','예: q2d, 매일'],['date','마지막 드레싱','date'],['note','메모','w','']]},
+ iv:{n:'IV line',f:[['site','부위','text','예: Rt. 전완'],['g','게이지','num'],['date','삽입일','date'],['note','메모','w','']]},
+ cline:{n:'C-line/PICC',f:[['site','부위','text','예: Rt. IJV'],['date','삽입일','date'],['dress','드레싱일','date'],['note','메모','w','']]},
+ o2:{n:'O₂',f:[['how','방법','text','예: NC, mask'],['l','양','num'],['note','메모','w','']]},
+ trach:{n:'T-cannula',f:[['size','size','text'],['date','교체일','date'],['note','메모','w','']]},
+ peg:{n:'PEG',f:[['fr','Fr','num'],['date','삽입일','date'],['feed','피딩','w','예: 그린비아 300cc tid'],['note','메모','w','']]},
+ etc:{n:'기타',f:[['name','무엇','text','예: 장루, 배액관'],['date','삽입일','date'],['note','메모','w','']]},
+};
+const UNIT={fr:'Fr',g:'G',cm:'cm',l:'L'};
+const md=v=>{const m=String(v).match(/^(\d{4})-(\d\d)-(\d\d)$/);return m?`${+m[2]}/${+m[3]}`:v};
+const dday=v=>{const m=String(v).match(/^(\d{4})-(\d\d)-(\d\d)$/);if(!m)return '';const t=new Date();t.setHours(0,0,0,0);const n=Math.round((t-new Date(+m[1],m[2]-1,+m[3]))/864e5);return n>=0?`D+${n}`:''};
+const dLabel=l=>({'삽입일':'삽입','드레싱일':'드레싱','마지막 드레싱':'최근 드레싱','교체일':'교체'})[l]||l;
+const devDetail=x=>{const T=DT[x.t]||DT.etc;return T.f.map(([k,l,ty])=>{const v=(x[k]||'').trim();if(!v)return '';
+  if(UNIT[k])return v+UNIT[k];
+  if(ty==='date'){const d=dday(v);return `${dLabel(l)} ${md(v)}${d?`(${d})`:''}`}
+  if(k==='feed')return '피딩: '+v; if(k==='drain')return '배액: '+v; return v}).filter(Boolean).join(' · ')};
+const devName=x=>x.t==='etc'&&x.name?x.name:(DT[x.t]||DT.etc).n;
 const PMH=['HTN','DM','Dyslipidemia','CVA','치매','파킨슨','CKD','HF','Afib','COPD','Cancer','결핵'];
 const SECS=[['basic','기본 정보'],['guard','보호자'],['mob','거동 · 욕창'],['dev','달고 있는 것'],['route','내원 경로'],['pmh','과거력'],['cc','현재 증상'],['lab','검사 결과'],['etc','기타']];
 const REL=['배우자','아들','딸','며느리','사위','손자녀','형제자매','기타'];
@@ -200,6 +238,7 @@ const STAGE=['1단계','2단계','3단계','4단계','미분류','DTI'];
 
 let data=[];
 try{data=JSON.parse(localStorage.getItem(KEY)||'[]');if(!Array.isArray(data))data=[]}catch(e){data=[]}
+data.forEach(p=>{if(p.devs&&!p.lines){p.lines=Object.entries(p.devs).map(([k,d])=>({t:DT[k]?k:'etc',note:(d&&d.note)||''}));delete p.devs}if(!p.lines)p.lines=[]});
 const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(data));return true}catch(e){toast('⚠️ 저장 실패 (브라우저 저장소 사용 불가)');return false}};
 let cur=null, prevView='list';
 
@@ -220,21 +259,22 @@ const setChip=(k,v)=>{const g=$(`.chips[data-k="${k}"]`);const arr=Array.isArray
 
 /* static builds */
 $('#pmhChips').innerHTML=PMH.map(p=>`<button class="chip" data-v="${p}">${p}</button>`).join('');
-$('#devs').innerHTML=DEVS.map(([k,n])=>`<div class="dev"><div class="chips" data-k="dev_${k}"><button class="chip" data-v="1">${n}</button></div><input type="text" id="dn_${k}" placeholder="${DEV_PH[k]}" disabled></div>`).join('');
+$('#devAdd').innerHTML=Object.entries(DT).map(([k,t])=>`<button type="button" class="addb" data-t="${k}">＋ ${t.n}</button>`).join('');
+$('#devAdd').onclick=e=>{const b=e.target.closest('.addb');if(b){const d=addDev({t:b.dataset.t});d.scrollIntoView({block:'center',behavior:'smooth'});const i=d.querySelector('input');i&&i.focus({preventScroll:true})}};
 
 document.addEventListener('chg',e=>{
   const k=e.target.dataset.k;
   if(k==='gHas'){$('#gBox').classList.toggle('hide',getChip('gHas')!=='y');if(getChip('gHas')==='y'&&!$('#gList').children.length)addG()}
   if(k==='soreHas'){$('#sBox').classList.toggle('hide',getChip('soreHas')!=='y');if(getChip('soreHas')==='y'&&!$('#sList').children.length)addS()}
   if(k==='route'){const r=getChip('route');$('#rJin').classList.toggle('hide',r!=='진협');$('#rMou').classList.toggle('hide',r!=='MOU');$('#rEtc').classList.toggle('hide',r!=='기타')}
-  if(k&&k.startsWith('dev_')){const id=k.slice(4),on=getChip(k).length>0,i=$('#dn_'+id);i.disabled=!on}
 });
 
 /* guardian / sore rows */
 function addG(v={}){
   const d=document.createElement('div');d.className='item g';
-  d.innerHTML=`<div class="row" style="margin:0 0 6px"><select class="rel">${REL.map(r=>`<option${r===v.rel?' selected':''}>${r}</option>`).join('')}</select><button class="x" type="button">✕ 삭제</button></div>
-  <input type="text" class="gn" placeholder="메모 (예: 상주, 주보호자, 연락처 등)" value="${esc(v.note)}">`;
+  d.innerHTML=`<div class="row" style="margin:0 0 6px"><select class="rel">${REL.map(r=>`<option${r===v.rel?' selected':''}>${r}</option>`).join('')}</select>
+  <select class="stay">${['','상주','비상주','연락만'].map(r=>`<option value="${r}"${r===(v.stay||'')?' selected':''}>${r||'상주 여부'}</option>`).join('')}</select><button class="x" type="button">✕</button></div>
+  <div class="row" style="margin:0"><input type="tel" class="tel" placeholder="연락처" value="${esc(v.tel)}"><input type="text" class="gn" placeholder="메모 (예: 주보호자, 결정권자)" value="${esc(v.note)}"></div>`;
   d.querySelector('.x').onclick=()=>d.remove();$('#gList').appendChild(d);
 }
 function addS(v={}){
@@ -244,11 +284,21 @@ function addS(v={}){
   <input type="text" class="sn" placeholder="크기·상태·드레싱 (예: 3x2cm, 폼드레싱 q2d)" value="${esc(v.note)}">`;
   d.querySelector('.x').onclick=()=>d.remove();$('#sList').appendChild(d);
 }
+function addDev(v){
+  const T=DT[v.t]||DT.etc;const d=document.createElement('div');d.className='dv';d.dataset.t=DT[v.t]?v.t:'etc';
+  d.innerHTML=`<div class="dh"><b>${T.n}</b><button class="x" type="button" style="background:none;border:0;color:#B33;font-weight:700">✕ 삭제</button></div><div class="fg">`+
+    T.f.map(([k,l,ty,ph])=>{const val=esc(v[k]||'');
+      if(ty==='date')return `<label>${l}<input type="date" data-f="${k}" value="${val}"></label>`;
+      if(ty==='num')return `<label>${l}<span class="unit" style="display:block"><input type="text" inputmode="decimal" data-f="${k}" value="${val}"><span>${UNIT[k]||''}</span></span></label>`;
+      return `<label class="${ty==='w'?'w':''}">${l}<input type="text" data-f="${k}" placeholder="${esc(ph||'')}" value="${val}"></label>`}).join('')+'</div>';
+  d.querySelector('.x').onclick=()=>{if([...d.querySelectorAll('[data-f]')].some(i=>i.value.trim())&&!confirm(T.n+' 항목을 삭제할까요?'))return;d.remove()};
+  $('#devList').appendChild(d);return d;
+}
 $('#gAdd').onclick=()=>addG();$('#sAdd').onclick=()=>addS();
 
 /* ---------- form <-> data ---------- */
 const blank=()=>({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),bed:'',name:'',age:'',sex:'',
-  gHas:'',guards:[],mob:'',mobNote:'',soreHas:'',sores:[],devs:{},route:'',routeFrom:'',routeTxt:'',
+  gHas:'',guards:[],mob:'',mobNote:'',soreHas:'',sores:[],lines:[],route:'',routeFrom:'',routeTxt:'',
   pmh:[],pmhTxt:'',cc:'',onset:'',lab:'',etc:'',memos:{},upd:0});
 
 function fill(p){
@@ -256,7 +306,7 @@ function fill(p){
   $('#gList').innerHTML='';(p.guards||[]).forEach(addG);setChip('gHas',p.gHas);
   setChip('mob',p.mob);$('#f_mobNote').value=p.mobNote||'';
   $('#sList').innerHTML='';(p.sores||[]).forEach(addS);setChip('soreHas',p.soreHas);
-  DEVS.forEach(([k])=>{const d=(p.devs||{})[k];$('#dn_'+k).value=d?d.note||'':'';setChip('dev_'+k,d?['1']:[])});
+  $('#devList').innerHTML='';(p.lines||[]).forEach(addDev);
   setChip('route',p.route);setChip('routeFrom',p.routeFrom||'');
   ['#f_rJinTxt','#f_rMouTxt','#f_rEtcTxt'].forEach(s=>$(s).value='');
   if(p.route==='진협')$('#f_rJinTxt').value=p.routeTxt;if(p.route==='MOU')$('#f_rMouTxt').value=p.routeTxt;if(p.route==='기타')$('#f_rEtcTxt').value=p.routeTxt;
@@ -266,10 +316,10 @@ function fill(p){
 function collect(p){
   const v=s=>$(s).value.trim();
   Object.assign(p,{bed:v('#f_bed'),name:v('#f_name'),age:v('#f_age'),sex:getChip('sex'),
-    gHas:getChip('gHas'),guards:getChip('gHas')==='y'?$$('#gList .g').map(d=>({rel:d.querySelector('.rel').value,note:d.querySelector('.gn').value.trim()})):[],
+    gHas:getChip('gHas'),guards:getChip('gHas')==='y'?$$('#gList .g').map(d=>({rel:d.querySelector('.rel').value,stay:d.querySelector('.stay').value,tel:d.querySelector('.tel').value.trim(),note:d.querySelector('.gn').value.trim()})):[],
     mob:getChip('mob'),mobNote:v('#f_mobNote'),
     soreHas:getChip('soreHas'),sores:getChip('soreHas')==='y'?$$('#sList .s').map(d=>({site:d.querySelector('.site').value,stage:d.querySelector('.stage').value,note:d.querySelector('.sn').value.trim()})):[],
-    devs:Object.fromEntries(DEVS.filter(([k])=>getChip('dev_'+k).length).map(([k])=>[k,{note:v('#dn_'+k)}])),
+    lines:$$('#devList .dv').map(d=>{const o={t:d.dataset.t};d.querySelectorAll('[data-f]').forEach(i=>{if(i.value.trim())o[i.dataset.f]=i.value.trim()});return o}),
     route:getChip('route'),routeFrom:getChip('route')==='진협'?getChip('routeFrom'):'',
     routeTxt:({'진협':v('#f_rJinTxt'),'MOU':v('#f_rMouTxt'),'기타':v('#f_rEtcTxt')})[getChip('route')]||'',
     pmh:getChip('pmh'),pmhTxt:v('#f_pmhTxt'),cc:v('#f_cc'),onset:v('#f_onset'),lab:v('#f_lab'),etc:v('#f_etc'),memos:Object.fromEntries(SECS.map(([k])=>[k,$('#m_'+k).value.trim()]).filter(x=>x[1])),upd:Date.now()});
@@ -277,24 +327,25 @@ function collect(p){
 }
 
 /* ---------- text helpers ---------- */
-const devName=k=>(DEVS.find(d=>d[0]===k)||[])[1]||k;
 const fmt={
   head:p=>[p.bed?`[${p.bed}]`:'',p.name||'(이름 없음)',[p.age,{M:'M',F:'F'}[p.sex]].filter(Boolean).join('/')].filter(Boolean).join(' '),
-  guard:p=>p.gHas==='n'?'없음':p.gHas==='y'?(p.guards.length?p.guards.map(g=>g.rel+(g.note?`(${g.note})`:'')).join(', '):'있음'):'',
+  guard:p=>p.gHas==='n'?'없음':p.gHas==='y'?(p.guards.length?p.guards.map(g=>{const x=[g.stay,g.tel,g.note].filter(Boolean).join(' · ');return g.rel+(x?` (${x})`:'')}).join(', '):'있음'):'',
   mob:p=>[p.mob,p.mobNote].filter(Boolean).join(' - '),
   sore:p=>p.soreHas==='n'?'없음':p.soreHas==='y'?(p.sores.length?p.sores.map(s=>`${s.site} ${s.stage}${s.note?` (${s.note})`:''}`).join(' / '):'있음'):'',
-  devs:p=>Object.entries(p.devs||{}).map(([k,d])=>devName(k)+(d.note?`(${d.note})`:'')).join(', '),
   route:p=>!p.route?'':p.route==='진협'?['진협',p.routeFrom&&(p.routeFrom+'에서'),p.routeTxt].filter(Boolean).join(' - '):[p.route,p.routeTxt].filter(Boolean).join(' - '),
   pmh:p=>[(p.pmh||[]).join(', '),p.pmhTxt].filter(Boolean).join(' / '),
   cc:p=>[p.cc,p.onset&&`(${p.onset}~)`].filter(Boolean).join(' '),
 };
-const ROWS=[['보호자',fmt.guard,'guard'],['거동',fmt.mob,'mob'],['욕창',fmt.sore,'mob'],['라인 등',fmt.devs,'dev'],['내원 경로',fmt.route,'route'],['과거력',fmt.pmh,'pmh'],['현재 증상',fmt.cc,'cc'],['검사',p=>p.lab,'lab'],['기타',p=>p.etc,'etc']];
+const ROWS=[['보호자',fmt.guard,'guard'],['거동',fmt.mob,'mob'],['욕창',fmt.sore,'mob'],['내원 경로',fmt.route,'route'],['과거력',fmt.pmh,'pmh'],['현재 증상',fmt.cc,'cc'],['검사',p=>p.lab,'lab'],['기타',p=>p.etc,'etc']];
 const memo=(p,k)=>((p.memos||{})[k]||'').trim();
 const memoLine=(p,k)=>memo(p,k)?'  📌 '+memo(p,k).replace(/\n/g,'\n     '):'';
+const rowsFor=(p,k)=>k==='dev'?((p.lines||[]).length?p.lines.map(x=>[devName(x),devDetail(x)]):[['라인 등','']]):ROWS.filter(r=>r[2]===k).map(([n,f])=>[n,f(p)]);
 const toText=p=>{
   const out=[fmt.head(p),memoLine(p,'basic')];
-  SECS.slice(1).forEach(([k])=>{ROWS.filter(r=>r[2]===k).forEach(([n,f])=>{const t=f(p);if(t)out.push(`${n}: ${t}`)});
-    if(memo(p,k))out.push((ROWS.some(r=>r[2]===k&&r[1](p))?'':SECS.find(s=>s[0]===k)[1]+':')+memoLine(p,k))});
+  SECS.slice(1).forEach(([k])=>{const rs=rowsFor(p,k);
+    if(k==='dev'&&p.lines.length)out.push('라인 등:',...p.lines.map(x=>`- ${devName(x)}${devDetail(x)?' '+devDetail(x):''}`));
+    else if(k!=='dev')rs.forEach(([n,t])=>{if(t)out.push(`${n}: ${t}`)});
+    if(memo(p,k))out.push((rs.some(r=>r[1])||(k==='dev'&&p.lines.length)?'':SECS.find(s=>s[0]===k)[1]+':')+memoLine(p,k))});
   return out.filter(Boolean).join('\n')};
 
 /* ---------- render ---------- */
@@ -310,7 +361,7 @@ function renderList(){
     const tags=[];
     if(p.mob)tags.push(`<span class="tag b">${esc(p.mob)}</span>`);
     if(p.soreHas==='y')tags.push(`<span class="tag w">욕창 ${p.sores.length?esc(p.sores.map(s=>s.site).join('·')):''}</span>`);
-    Object.keys(p.devs||{}).forEach(k=>tags.push(`<span class="tag w">${esc(devName(k))}</span>`));
+    (p.lines||[]).forEach(x=>tags.push(`<span class="tag w">${esc(devName(x)+(x.fr?' '+x.fr+'Fr':''))}</span>`));
     if(p.gHas==='y')tags.push(`<span class="tag g">보호자 ${esc(p.guards.map(g=>g.rel).join('·'))}</span>`);
     if(p.gHas==='n')tags.push(`<span class="tag">보호자 없음</span>`);
     if(p.route)tags.push(`<span class="tag">${esc(p.route)}</span>`);
@@ -324,7 +375,9 @@ function renderView(p){
   SECS.forEach(([k,title])=>{
     const sec=document.createElement('div');sec.className='sec';
     if(k==='basic')sec.innerHTML=`<div class="vhead">${esc(fmt.head(p))}</div><div class="upd" style="text-align:left;margin-top:4px">마지막 수정 ${new Date(p.upd).toLocaleString('ko-KR')}</div>`;
-    else sec.innerHTML=`<h2>${title}</h2><dl>`+ROWS.filter(r=>r[2]===k).map(([n,f])=>{const t=f(p);return `<dt>${n}</dt><dd>${t?esc(t):'<span style="color:#bbb">-</span>'}</dd>`}).join('')+'</dl>';
+    else{const rs=rowsFor(p,k);
+      if(!rs.some(r=>r[1])&&!memo(p,k)){sec.classList.add('esec');sec.innerHTML=`<h2>${title}</h2><span class="et">미입력 · 눌러서 입력</span>`;sec.onclick=e=>{if(!e.target.closest('.mbtn'))openEdit(p,false)}}
+      else sec.innerHTML=`<h2>${title}</h2><dl class="${k==='dev'?'lines':''}">`+rs.map(([n,t])=>`<dt>${esc(n)}</dt><dd>${t?esc(t):'<span style="color:#bbb">-</span>'}</dd>`).join('')+'</dl>';}
     S.appendChild(sec);
     const ta=attachMemo(sec,k);ta.value=memo(p,k);ta._sync();
     ta.addEventListener('input',()=>{p.memos=p.memos||{};const v=ta.value.trim();if(v)p.memos[k]=v;else delete p.memos[k];clearTimeout(ta._t);ta._t=setTimeout(persist,300)});
