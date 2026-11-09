@@ -64,6 +64,28 @@ input:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:-1px;bord
 .toast{position:fixed;left:50%;top:18px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:10px;font-size:.9rem;z-index:20;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.on{opacity:1}
 .upd{font-size:.76rem;color:#9A968D;text-align:right;margin-top:10px}
+
+/* post-it memo */
+.sec{position:relative}
+.secwrap>.sec{margin-bottom:12px}
+.mbtn{position:absolute;top:11px;right:11px;background:#FFF3A3;border:1.5px solid #E8D98A;color:#7A6A10;border-radius:8px;padding:3px 9px;font-size:.8rem;font-weight:700}
+.mbtn.has{background:#FFE45C;border-color:#D9C24A}
+.postit{background:#FFF3A3;border-radius:2px 2px 14px 2px;box-shadow:2px 4px 8px rgba(0,0,0,.16);padding:8px 10px 6px;margin:-2px 10px 16px;transform:rotate(-.7deg)}
+.postit .ph{display:flex;justify-content:space-between;align-items:center;font-size:.78rem;font-weight:800;color:#7A6A10}
+.postit .px{background:none;border:0;color:#9A8420;font-weight:800;padding:2px 4px}
+.postit textarea{background:transparent;border:0;padding:4px 2px;min-height:80px;font-size:.92rem;line-height:1.55;color:#3D3510}
+.postit textarea:focus{outline:none}
+#vView .sec dl{margin:0;display:grid;grid-template-columns:76px 1fr;gap:7px 10px}
+#vView .sec dt{font-size:.82rem;font-weight:800;color:var(--sub);padding-top:2px}
+#vView .sec dd{margin:0;font-size:.95rem;white-space:pre-wrap}
+.vhead{font-weight:800;font-size:1.15rem;padding-right:70px}
+@media (min-width:900px){
+  main{max-width:900px}
+  #vList{max-width:600px;margin:0 auto}
+  .secwrap{display:grid;grid-template-columns:minmax(0,1fr) 240px;gap:20px;align-items:start}
+  .postit{margin:4px 0 12px;transform:rotate(1.2deg)}
+  .secwrap:nth-child(even) .postit{transform:rotate(-1deg)}
+}
 </style></head><body><main>
 
 <!-- ===== 목록 ===== -->
@@ -86,7 +108,7 @@ input:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:-1px;bord
 <section id="vView" class="hide">
   <div class="bar"><button class="btn l s" data-go="list">← 목록</button><span style="flex:1"></span>
     <button class="btn l s" id="vCopy">복사</button><button class="btn s" id="vEdit">수정</button></div>
-  <div class="sum" id="sum"></div>
+  <div id="sum"></div>
 </section>
 
 <!-- ===== 입력/수정 ===== -->
@@ -171,6 +193,7 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&g
 const DEVS=[['foley','Foley'],['ltube','L-tube'],['dress','드레싱'],['iv','IV line'],['o2','O₂'],['trach','T-cannula'],['peg','PEG'],['etc','기타']];
 const DEV_PH={foley:'삽입일·size (예: 11/2, 16Fr)',ltube:'삽입일·위치 (예: 11/5, 55cm)',dress:'부위·방법 (예: Lt. 하지 폼드레싱)',iv:'부위·게이지 (예: Rt. 전완 22G)',o2:'방법·양 (예: NC 2L)',trach:'size·교체일',peg:'삽입일·상태',etc:'무엇인지 적기'};
 const PMH=['HTN','DM','Dyslipidemia','CVA','치매','파킨슨','CKD','HF','Afib','COPD','Cancer','결핵'];
+const SECS=[['basic','기본 정보'],['guard','보호자'],['mob','거동 · 욕창'],['dev','달고 있는 것'],['route','내원 경로'],['pmh','과거력'],['cc','현재 증상'],['lab','검사 결과'],['etc','기타']];
 const REL=['배우자','아들','딸','며느리','사위','손자녀','형제자매','기타'];
 const SITE=['천골','미골','좌 둔부','우 둔부','좌 발뒤꿈치','우 발뒤꿈치','좌 대전자','우 대전자','기타'];
 const STAGE=['1단계','2단계','3단계','4단계','미분류','DTI'];
@@ -226,7 +249,7 @@ $('#gAdd').onclick=()=>addG();$('#sAdd').onclick=()=>addS();
 /* ---------- form <-> data ---------- */
 const blank=()=>({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),bed:'',name:'',age:'',sex:'',
   gHas:'',guards:[],mob:'',mobNote:'',soreHas:'',sores:[],devs:{},route:'',routeFrom:'',routeTxt:'',
-  pmh:[],pmhTxt:'',cc:'',onset:'',lab:'',etc:'',upd:0});
+  pmh:[],pmhTxt:'',cc:'',onset:'',lab:'',etc:'',memos:{},upd:0});
 
 function fill(p){
   $('#f_bed').value=p.bed;$('#f_name').value=p.name;$('#f_age').value=p.age;setChip('sex',p.sex);
@@ -238,7 +261,7 @@ function fill(p){
   ['#f_rJinTxt','#f_rMouTxt','#f_rEtcTxt'].forEach(s=>$(s).value='');
   if(p.route==='진협')$('#f_rJinTxt').value=p.routeTxt;if(p.route==='MOU')$('#f_rMouTxt').value=p.routeTxt;if(p.route==='기타')$('#f_rEtcTxt').value=p.routeTxt;
   setChip('pmh',p.pmh||[]);$('#f_pmhTxt').value=p.pmhTxt||'';
-  $('#f_cc').value=p.cc;$('#f_onset').value=p.onset;$('#f_lab').value=p.lab;$('#f_etc').value=p.etc;
+  fillMemos(p);$('#f_cc').value=p.cc;$('#f_onset').value=p.onset;$('#f_lab').value=p.lab;$('#f_etc').value=p.etc;
 }
 function collect(p){
   const v=s=>$(s).value.trim();
@@ -249,7 +272,7 @@ function collect(p){
     devs:Object.fromEntries(DEVS.filter(([k])=>getChip('dev_'+k).length).map(([k])=>[k,{note:v('#dn_'+k)}])),
     route:getChip('route'),routeFrom:getChip('route')==='진협'?getChip('routeFrom'):'',
     routeTxt:({'진협':v('#f_rJinTxt'),'MOU':v('#f_rMouTxt'),'기타':v('#f_rEtcTxt')})[getChip('route')]||'',
-    pmh:getChip('pmh'),pmhTxt:v('#f_pmhTxt'),cc:v('#f_cc'),onset:v('#f_onset'),lab:v('#f_lab'),etc:v('#f_etc'),upd:Date.now()});
+    pmh:getChip('pmh'),pmhTxt:v('#f_pmhTxt'),cc:v('#f_cc'),onset:v('#f_onset'),lab:v('#f_lab'),etc:v('#f_etc'),memos:Object.fromEntries(SECS.map(([k])=>[k,$('#m_'+k).value.trim()]).filter(x=>x[1])),upd:Date.now()});
   return p;
 }
 
@@ -265,8 +288,14 @@ const fmt={
   pmh:p=>[(p.pmh||[]).join(', '),p.pmhTxt].filter(Boolean).join(' / '),
   cc:p=>[p.cc,p.onset&&`(${p.onset}~)`].filter(Boolean).join(' '),
 };
-const ROWS=[['보호자',fmt.guard],['거동',fmt.mob],['욕창',fmt.sore],['라인 등',fmt.devs],['내원 경로',fmt.route],['과거력',fmt.pmh],['현재 증상',fmt.cc],['검사',p=>p.lab],['기타',p=>p.etc]];
-const toText=p=>[fmt.head(p),...ROWS.map(([n,f])=>{const t=f(p);return t?`${n}: ${t}`:''}).filter(Boolean)].join('\n');
+const ROWS=[['보호자',fmt.guard,'guard'],['거동',fmt.mob,'mob'],['욕창',fmt.sore,'mob'],['라인 등',fmt.devs,'dev'],['내원 경로',fmt.route,'route'],['과거력',fmt.pmh,'pmh'],['현재 증상',fmt.cc,'cc'],['검사',p=>p.lab,'lab'],['기타',p=>p.etc,'etc']];
+const memo=(p,k)=>((p.memos||{})[k]||'').trim();
+const memoLine=(p,k)=>memo(p,k)?'  📌 '+memo(p,k).replace(/\n/g,'\n     '):'';
+const toText=p=>{
+  const out=[fmt.head(p),memoLine(p,'basic')];
+  SECS.slice(1).forEach(([k])=>{ROWS.filter(r=>r[2]===k).forEach(([n,f])=>{const t=f(p);if(t)out.push(`${n}: ${t}`)});
+    if(memo(p,k))out.push((ROWS.some(r=>r[2]===k&&r[1](p))?'':SECS.find(s=>s[0]===k)[1]+':')+memoLine(p,k))});
+  return out.filter(Boolean).join('\n')};
 
 /* ---------- render ---------- */
 const bedKey=b=>{const m=String(b).match(/\d+/);return [m?+m[0]:1e9,String(b)]};
@@ -285,15 +314,39 @@ function renderList(){
     if(p.gHas==='y')tags.push(`<span class="tag g">보호자 ${esc(p.guards.map(g=>g.rel).join('·'))}</span>`);
     if(p.gHas==='n')tags.push(`<span class="tag">보호자 없음</span>`);
     if(p.route)tags.push(`<span class="tag">${esc(p.route)}</span>`);
+    if(Object.values(p.memos||{}).some(Boolean))tags.push(`<span class="tag" style="background:#FFF3A3;color:#7A6A10">📌 메모 ${Object.values(p.memos).filter(Boolean).length}</span>`);
     return `<div class="pt" data-id="${p.id}"><div class="top">${p.bed?`<span class="bed">${esc(p.bed)}</span>`:''}<span class="nm">${esc(p.name||'(이름 없음)')}</span>
       <span class="as">${esc([p.age,{M:'남',F:'여'}[p.sex]].filter(Boolean).join(' / '))}</span></div>
       ${tags.length?`<div class="tags">${tags.join('')}</div>`:''}${p.cc?`<div class="cc">🩺 ${esc(fmt.cc(p))}</div>`:''}</div>`}).join('');
 }
 function renderView(p){
-  $('#sum').innerHTML=`<div style="font-weight:800;font-size:1.15rem;margin-bottom:12px">${esc(fmt.head(p))}</div><dl>`+
-    ROWS.map(([n,f])=>{const t=f(p);return `<dt>${n}</dt><dd>${t?esc(t):'<span style="color:#bbb">-</span>'}</dd>`}).join('')+
-    `</dl><div class="upd">마지막 수정 ${new Date(p.upd).toLocaleString('ko-KR')}</div>`;
+  const S=$('#sum');S.innerHTML='';S.className='';
+  SECS.forEach(([k,title])=>{
+    const sec=document.createElement('div');sec.className='sec';
+    if(k==='basic')sec.innerHTML=`<div class="vhead">${esc(fmt.head(p))}</div><div class="upd" style="text-align:left;margin-top:4px">마지막 수정 ${new Date(p.upd).toLocaleString('ko-KR')}</div>`;
+    else sec.innerHTML=`<h2>${title}</h2><dl>`+ROWS.filter(r=>r[2]===k).map(([n,f])=>{const t=f(p);return `<dt>${n}</dt><dd>${t?esc(t):'<span style="color:#bbb">-</span>'}</dd>`}).join('')+'</dl>';
+    S.appendChild(sec);
+    const ta=attachMemo(sec,k);ta.value=memo(p,k);ta._sync();
+    ta.addEventListener('input',()=>{p.memos=p.memos||{};const v=ta.value.trim();if(v)p.memos[k]=v;else delete p.memos[k];clearTimeout(ta._t);ta._t=setTimeout(persist,300)});
+  });
 }
+
+/* ---------- post-it memo ---------- */
+function attachMemo(sec,key){
+  const w=document.createElement('div');w.className='secwrap';sec.replaceWith(w);w.appendChild(sec);
+  const b=document.createElement('button');b.type='button';b.className='mbtn';b.textContent='📌 메모';sec.appendChild(b);
+  const pi=document.createElement('div');pi.className='postit hide';
+  pi.innerHTML='<div class="ph"><span>📌 메모</span><button type="button" class="px" title="메모 지우기">✕</button></div><textarea placeholder="여기에 메모..."></textarea>';
+  w.appendChild(pi);
+  const ta=pi.querySelector('textarea');
+  ta._sync=()=>{const has=!!ta.value.trim();pi.classList.toggle('hide',!has);b.classList.toggle('has',has)};
+  ta.addEventListener('input',()=>b.classList.toggle('has',!!ta.value.trim()));
+  b.onclick=()=>{pi.classList.remove('hide');ta.focus()};
+  pi.querySelector('.px').onclick=()=>{if(ta.value.trim()&&!confirm('이 메모를 지울까요?'))return;ta.value='';ta.dispatchEvent(new Event('input'));pi.classList.add('hide')};
+  return ta;
+}
+$$('#vEditF .sec').forEach((sec,i)=>{const ta=attachMemo(sec,SECS[i][0]);ta.id='m_'+SECS[i][0]});
+function fillMemos(p){SECS.forEach(([k])=>{const ta=$('#m_'+k);ta.value=memo(p,k);ta._sync()})}
 
 /* ---------- actions ---------- */
 function openView(id){cur=data.find(p=>p.id===id);if(!cur)return;renderView(cur);show('vView')}
