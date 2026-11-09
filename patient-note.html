@@ -81,7 +81,7 @@ svg{display:block;flex:none}
 .btn.r{background:transparent;color:var(--red);border-color:transparent}
 .btn.r:hover{background:#F6ECE8}
 .btn.s{height:32px;padding:0 13px;font-size:13px}
-input[type=text],input[type=number],input[type=tel],input[type=date],input[type=time],textarea,select{font:inherit;font-size:14.5px;width:100%;padding:7px 0;border:0;border-bottom:1px solid var(--rule);border-radius:0;background:transparent;color:var(--ink);transition:border-color .15s}
+input[type=text],input[type=number],input[type=tel],input[type=date],textarea,select{font:inherit;font-size:14.5px;width:100%;padding:7px 0;border:0;border-bottom:1px solid var(--rule);border-radius:0;background:transparent;color:var(--ink);transition:border-color .15s}
 input::placeholder,textarea::placeholder{color:#BCB6A8}
 input:focus,textarea:focus,select:focus{outline:none;border-bottom-color:var(--ink)}
 select{appearance:none;-webkit-appearance:none;height:36px;padding-right:22px;background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%237C786E' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 2px center;cursor:pointer}
@@ -129,13 +129,6 @@ textarea:focus{background-image:repeating-linear-gradient(to bottom,transparent 
 .fg label.w{grid-column:span 2}
 .fg input{margin-top:1px;width:100%;display:block;height:34px}
 .unit{position:relative}.unit input{padding-right:28px}.unit span{position:absolute;right:0;bottom:8px;font-size:12px;color:var(--mute)}
-
-/* vitals */
-.fu1{display:flex;align-items:center;gap:14px;margin-top:10px}
-.fu1 .fl1{font-family:var(--serif);font-size:13.5px;font-weight:600;flex:none}
-.fu1 .ft{width:116px;flex:none}
-.fu1 .fx{flex:1;min-width:0}
-.fuq{margin-top:12px}
 
 /* view */
 .phead .eyebrow{font-family:var(--serif);font-size:13px;color:var(--sub);margin-bottom:6px;letter-spacing:.02em}
@@ -198,8 +191,6 @@ textarea:focus{background-image:repeating-linear-gradient(to bottom,transparent 
   .crumb .acts{flex:1;justify-content:flex-end}
   .basic{grid-template-columns:1fr 1fr}
   .fg{grid-template-columns:1fr 1fr}
-  .fu1{gap:10px}
-  .fu1 .ft{width:118px}
   .sticky{margin:0 -18px;padding:10px 18px}
   .sticky .btn{flex:1}
   #vView .sec dl{grid-template-columns:84px 1fr}
@@ -261,12 +252,6 @@ textarea:focus{background-image:repeating-linear-gradient(to bottom,transparent 
       <label>나이<input type="number" id="f_age" inputmode="numeric" placeholder="세"></label>
       <div><span class="fl" style="margin-bottom:4px">성별</span><div class="chips" data-k="sex" data-one><button class="chip" data-v="M">남</button><button class="chip" data-v="F">여</button></div></div>
     </div>
-  </div>
-
-  <div class="sec"><h2>특이 바이탈</h2>
-    <input type="text" id="f_vs" placeholder="내원 시 특이 바이탈만 (예: BT 38.6, SpO₂ 92%, BP 88/50)">
-    <div id="fuList"></div>
-    <button class="btn l s" id="fuAdd" style="margin-top:12px"></button>
   </div>
 
   <div class="sec"><h2>보호자</h2>
@@ -365,33 +350,21 @@ const devDetail=x=>{const T=DT[x.t]||DT.etc;return T.f.map(([k,l,ty])=>{const v=
   if(ty==='date'){const d=dday(v);return `${dLabel(l)} ${md(v)}${d?`(${d})`:''}`}
   if(k==='feed')return '피딩: '+v; if(k==='drain')return '배액: '+v; return v}).filter(Boolean).join(' · ')};
 const devName=x=>x.t==='etc'&&x.name?x.name:(DT[x.t]||DT.etc).n;
-/* vitals: [key, label, unit, placeholder] */
-const VF=[['bp','BP','','120/80'],['hr','HR','','80'],['rr','RR','','20'],['bt','BT','℃','36.5'],['spo2','SpO₂','%','98'],['bst','BST','','120']];
-const MENTAL=['','Alert','Drowsy','Stupor','Semicoma','Coma','혼돈(confused)'];
-// 이상 판정: 'h' 높음 / 'l' 낮음 / ''
-const vAbn=(k,v)=>{v=String(v||'').trim();if(!v)return '';
-  if(k==='bp'){const m=v.match(/(\d+)\s*\/\s*(\d+)/);if(!m)return '';const sb=+m[1],db=+m[2];return sb>=160||db>=100?'h':sb<90||db<50?'l':''}
-  const n=parseFloat(v);if(isNaN(n))return '';
-  const R={hr:[50,110],rr:[10,24],bt:[36,37.8],spo2:[94,999],bst:[70,300]}[k];if(!R)return '';
-  return n<R[0]?'l':(k==='bt'?n>=R[1]:n>R[1])?'h':''};
-const vPart=(k,v)=>{const F=VF.find(f=>f[0]===k);const a=vAbn(k,v);return {t:`${F[1]} ${v}${F[2]}${a==='h'?'↑':a==='l'?'↓':''}`,a}};
-const vParts=o=>VF.filter(([k])=>(o[k]||'').trim()).map(([k])=>vPart(k,o[k].trim()))
-  .concat(o.mental?[{t:'의식 '+o.mental,a:o.mental!=='Alert'?'h':''}]:[]);
-const vText=o=>vParts(o).map(x=>x.t).concat(o.note?[o.note]:[]).join(' · ');
-const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
-const fuLabel=f=>'f/u '+(f.d&&f.d!==today()?md(f.d)+' ':'')+(f.time||'');
 const PMH=['HTN','DM','Dyslipidemia','CVA','치매','파킨슨','CKD','HF','Afib','COPD','Cancer','결핵'];
-const SECS=[['basic','기본 정보'],['vit','특이 바이탈'],['guard','보호자'],['mob','거동 · 욕창'],['dev','달고 있는 것'],['route','내원 경로'],['pmh','과거력'],['cc','현재 증상'],['lab','검사 결과'],['etc','기타']];
+const SECS=[['basic','기본 정보'],['guard','보호자'],['mob','거동 · 욕창'],['dev','달고 있는 것'],['route','내원 경로'],['pmh','과거력'],['cc','현재 증상'],['lab','검사 결과'],['etc','기타']];
 const REL=['배우자','아들','딸','며느리','사위','손자녀','형제자매','기타'];
 const SITE=['천골','미골','좌 둔부','우 둔부','좌 발뒤꿈치','우 발뒤꿈치','좌 대전자','우 대전자','기타'];
 const STAGE=['1단계','2단계','3단계','4단계','미분류','DTI'];
 
 let data=[];
 try{data=JSON.parse(localStorage.getItem(KEY)||'[]');if(!Array.isArray(data))data=[]}catch(e){data=[]}
-data.forEach(p=>{if(p.devs&&!p.lines){p.lines=Object.entries(p.devs).map(([k,d])=>({t:DT[k]?k:'etc',note:(d&&d.note)||''}));delete p.devs}if(!p.lines)p.lines=[];});
-// 예전 형식(칸별 바이탈) 기록을 한 줄 텍스트로 변환
-data.forEach(p=>{if(p.vit&&typeof p.vit==='object'){if(!p.vs&&Object.keys(p.vit).length)p.vs=vText(p.vit);delete p.vit}
-  p.vs=p.vs||'';p.fu=(p.fu||[]).map(f=>f.txt!==undefined?f:{d:f.d,time:f.time,txt:vText(f)})});
+data.forEach(p=>{if(p.devs&&!p.lines){p.lines=Object.entries(p.devs).map(([k,d])=>({t:DT[k]?k:'etc',note:(d&&d.note)||''}));delete p.devs}if(!p.lines)p.lines=[]});
+data.forEach(p=>{const L=[];
+  if(p.vit&&typeof p.vit==='object'){const t=Object.entries(p.vit).filter(([,v])=>v).map(([k,v])=>(k==='note'||k==='mental'?'':k.toUpperCase()+' ')+v).join(', ');if(t)L.push('내원 시 '+t)}
+  if(p.vs)L.push('내원 시 '+p.vs);
+  (p.fu||[]).forEach(f=>{const t=f.txt!==undefined?f.txt:Object.entries(f).filter(([k,v])=>v&&k!=='d'&&k!=='time').map(([k,v])=>(k==='note'||k==='mental'?'':k.toUpperCase()+' ')+v).join(', ');if(t)L.push('f/u '+(f.time||'')+' '+t)});
+  if(L.length){p.memos=p.memos||{};p.memos.basic=[p.memos.basic,L.join('\n')].filter(Boolean).join('\n')}
+  delete p.vit;delete p.vs;delete p.fu});
 const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(data));return true}catch(e){toast('저장 실패 (브라우저 저장소 사용 불가)');return false}};
 let cur=null, prevView='list';
 
@@ -454,20 +427,11 @@ function addDev(v){
   d.querySelector('.x').onclick=()=>{if([...d.querySelectorAll('[data-f]')].some(i=>i.value.trim())&&!confirm(T.n+' 항목을 삭제할까요?'))return;d.remove()};
   $('#devList').appendChild(d);return d;
 }
-function addFu(v={}){
-  if(!v.time){const d=new Date();v=Object.assign({time:`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`,d:today()},v)}
-  const r=document.createElement('div');r.className='fu1';r.dataset.d=v.d||today();
-  r.innerHTML=`<span class="fl1">f/u</span><input type="time" class="ft" value="${esc(v.time||'')}"><input type="text" class="fx" placeholder="예: BT 37.9 (해열제 1시간 후)" value="${esc(v.txt||'')}"><button class="x" type="button" title="삭제">${IX}</button>`;
-  r.querySelector('.x').onclick=()=>{if(r.querySelector('.fx').value.trim()&&!confirm('이 f/u 기록을 삭제할까요?'))return;r.remove()};
-  $('#fuList').appendChild(r);return r;
-}
-$('#fuAdd').innerHTML=IPLUS+'f/u 추가';
-$('#fuAdd').onclick=()=>addFu().querySelector('.fx').focus();
 $('#gAdd').onclick=()=>addG();$('#sAdd').onclick=()=>addS();
 
 /* ---------- form <-> data ---------- */
 const blank=()=>({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),bed:'',name:'',age:'',sex:'',
-  gHas:'',guards:[],mob:'',mobNote:'',soreHas:'',sores:[],lines:[],vs:'',fu:[],route:'',routeFrom:'',routeTxt:'',
+  gHas:'',guards:[],mob:'',mobNote:'',soreHas:'',sores:[],lines:[],route:'',routeFrom:'',routeTxt:'',
   pmh:[],pmhTxt:'',cc:'',onset:'',lab:'',etc:'',memos:{},upd:0});
 
 function fill(p){
@@ -480,7 +444,6 @@ function fill(p){
   ['#f_rJinTxt','#f_rMouTxt','#f_rEtcTxt'].forEach(s=>$(s).value='');
   if(p.route==='진협')$('#f_rJinTxt').value=p.routeTxt;if(p.route==='MOU')$('#f_rMouTxt').value=p.routeTxt;if(p.route==='기타')$('#f_rEtcTxt').value=p.routeTxt;
   setChip('pmh',p.pmh||[]);$('#f_pmhTxt').value=p.pmhTxt||'';
-  $('#f_vs').value=p.vs||'';$('#fuList').innerHTML='';(p.fu||[]).forEach(f=>addFu(f));
   fillMemos(p);$('#f_cc').value=p.cc;$('#f_onset').value=p.onset;$('#f_lab').value=p.lab;$('#f_etc').value=p.etc;
 }
 function collect(p){
@@ -492,8 +455,7 @@ function collect(p){
     lines:$$('#devList .dv').map(d=>{const o={t:d.dataset.t};d.querySelectorAll('[data-f]').forEach(i=>{if(i.value.trim())o[i.dataset.f]=i.value.trim()});return o}),
     route:getChip('route'),routeFrom:getChip('route')==='진협'?getChip('routeFrom'):'',
     routeTxt:({'진협':v('#f_rJinTxt'),'MOU':v('#f_rMouTxt'),'기타':v('#f_rEtcTxt')})[getChip('route')]||'',
-    pmh:getChip('pmh'),pmhTxt:v('#f_pmhTxt'),cc:v('#f_cc'),onset:v('#f_onset'),lab:v('#f_lab'),etc:v('#f_etc'),vs:v('#f_vs'),
-    fu:$$('#fuList .fu1').map(r=>({d:r.dataset.d,time:r.querySelector('.ft').value,txt:r.querySelector('.fx').value.trim()})).filter(f=>f.txt),memos:Object.fromEntries(SECS.map(([k])=>[k,$('#m_'+k).value.trim()]).filter(x=>x[1])),upd:Date.now()});
+    pmh:getChip('pmh'),pmhTxt:v('#f_pmhTxt'),cc:v('#f_cc'),onset:v('#f_onset'),lab:v('#f_lab'),etc:v('#f_etc'),memos:Object.fromEntries(SECS.map(([k])=>[k,$('#m_'+k).value.trim()]).filter(x=>x[1])),upd:Date.now()});
   return p;
 }
 
@@ -510,8 +472,7 @@ const fmt={
 const ROWS=[['보호자',fmt.guard,'guard'],['거동',fmt.mob,'mob'],['욕창',fmt.sore,'mob'],['내원 경로',fmt.route,'route'],['과거력',fmt.pmh,'pmh'],['현재 증상',fmt.cc,'cc'],['검사',p=>p.lab,'lab'],['기타',p=>p.etc,'etc']];
 const memo=(p,k)=>((p.memos||{})[k]||'').trim();
 const memoLine=(p,k)=>memo(p,k)?'  └ 메모: '+memo(p,k).replace(/\n/g,'\n          '):'';
-const vitRows=p=>{const r=[];if(p.vs)r.push(['내원 시',p.vs]);(p.fu||[]).forEach(f=>r.push([fuLabel(f),f.txt]));return r.length?r:[['특이 바이탈','']]};
-const rowsFor=(p,k)=>k==='vit'?vitRows(p):k==='dev'?((p.lines||[]).length?p.lines.map(x=>[devName(x),devDetail(x)]):[['라인 등','']]):ROWS.filter(r=>r[2]===k).map(([n,f])=>[n,f(p)]);
+const rowsFor=(p,k)=>k==='dev'?((p.lines||[]).length?p.lines.map(x=>[devName(x),devDetail(x)]):[['라인 등','']]):ROWS.filter(r=>r[2]===k).map(([n,f])=>[n,f(p)]);
 const toText=p=>{
   const out=[fmt.head(p),memoLine(p,'basic')];
   SECS.slice(1).forEach(([k])=>{const rs=rowsFor(p,k);
@@ -533,7 +494,6 @@ function renderList(){
     const tags=[];
     if(p.mob)tags.push(`<span class="tag b">${esc(p.mob)}</span>`);
     if(p.soreHas==='y')tags.push(`<span class="tag w">욕창 ${p.sores.length?esc(p.sores.map(s=>s.site).join('·')):''}</span>`);
-    {const fu=p.fu||[];const last=fu.length?fu[fu.length-1].txt:p.vs;if(last)tags.push(`<span class="tag w">V/S ${esc(last.length>22?last.slice(0,22)+'…':last)}</span>`)}
     (p.lines||[]).forEach(x=>tags.push(`<span class="tag w">${esc(devName(x)+(x.fr?' '+x.fr+'Fr':''))}</span>`));
     if(p.gHas==='y')tags.push(`<span class="tag g">보호자 ${esc(p.guards.map(g=>g.rel).join('·'))}</span>`);
     if(p.gHas==='n')tags.push(`<span class="tag">보호자 없음</span>`);
@@ -552,10 +512,7 @@ function renderView(p){
       sec.innerHTML=`<div class="phead"><div class="eyebrow">${p.bed?`No. ${esc(p.bed)}`:'베드 미지정'}</div><div class="pn">${esc(p.name||'(이름 없음)')}</div><div class="meta">${meta}</div></div>`;}
     else{const rs=rowsFor(p,k);
       if(!rs.some(r=>r[1])&&!memo(p,k)){sec.classList.add('esec');sec.innerHTML=`<h2>${title}</h2><span class="et">미입력 · 눌러서 입력</span>`;sec.onclick=e=>{if(!e.target.closest('.mbtn'))openEdit(p,false)}}
-      else sec.innerHTML=`<h2>${title}</h2><dl class="${k==='dev'?'lines':''}">`+rs.map(([n,t,h])=>`<dt>${esc(n)}</dt><dd>${!t?'<span style="color:#bbb">-</span>':h?h:k==='dev'?t.split(' · ').map(x=>esc(x).replace(/\((D\+\d+)\)/,'<span class="dn">$1</span>')).join('<span class="sep">/</span>'):esc(t)}</dd>`).join('')+'</dl>';}
-    if(k==='vit'){const b=document.createElement('button');b.type='button';b.className='btn l s fuq';b.innerHTML=IPLUS+'f/u 추가';
-      b.onclick=e=>{e.stopPropagation();openEdit(p,false);const r=addFu();r.scrollIntoView({block:'center'});r.querySelector('.fx').focus({preventScroll:true})};
-      if(sec.classList.contains('esec')){b.style.margin='0 0 0 auto';b.style.marginRight='70px'}sec.appendChild(b)}
+      else sec.innerHTML=`<h2>${title}</h2><dl class="${k==='dev'?'lines':''}">`+rs.map(([n,t])=>`<dt>${esc(n)}</dt><dd>${!t?'<span style="color:#bbb">-</span>':k==='dev'?t.split(' · ').map(x=>esc(x).replace(/\((D\+\d+)\)/,'<span class="dn">$1</span>')).join('<span class="sep">/</span>'):esc(t)}</dd>`).join('')+'</dl>';}
     S.appendChild(sec);
     const ta=attachMemo(sec,k);ta.value=memo(p,k);ta._sync();
     ta.addEventListener('input',()=>{p.memos=p.memos||{};const v=ta.value.trim();if(v)p.memos[k]=v;else delete p.memos[k];clearTimeout(ta._t);ta._t=setTimeout(persist,300)});
