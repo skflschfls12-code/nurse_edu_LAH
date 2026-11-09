@@ -1,5 +1,5 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow"><title>환자 파악 노트</title>
+<meta name="robots" content="noindex,nofollow"><title>환자 인계</title>
 <!-- 글꼴: 인터넷이 되면 받아오고, 막혀 있으면 기다리지 않고 컴퓨터 기본 글꼴(바탕/맑은 고딕)로 바로 표시 -->
 <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" media="print" onload="this.media='all'" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.min.css">
@@ -81,7 +81,7 @@ svg{display:block;flex:none}
 .btn.r{background:transparent;color:var(--red);border-color:transparent}
 .btn.r:hover{background:#F6ECE8}
 .btn.s{height:32px;padding:0 13px;font-size:13px}
-input[type=text],input[type=number],input[type=tel],input[type=date],textarea,select{font:inherit;font-size:14.5px;width:100%;padding:7px 0;border:0;border-bottom:1px solid var(--rule);border-radius:0;background:transparent;color:var(--ink);transition:border-color .15s}
+input[type=text],input[type=number],input[type=tel],input[type=date],input[type=time],textarea,select{font:inherit;font-size:14.5px;width:100%;padding:7px 0;border:0;border-bottom:1px solid var(--rule);border-radius:0;background:transparent;color:var(--ink);transition:border-color .15s}
 input::placeholder,textarea::placeholder{color:#BCB6A8}
 input:focus,textarea:focus,select:focus{outline:none;border-bottom-color:var(--ink)}
 select{appearance:none;-webkit-appearance:none;height:36px;padding-right:22px;background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%237C786E' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 2px center;cursor:pointer}
@@ -129,6 +129,22 @@ textarea:focus{background-image:repeating-linear-gradient(to bottom,transparent 
 .fg label.w{grid-column:span 2}
 .fg input{margin-top:1px;width:100%;display:block;height:34px}
 .unit{position:relative}.unit input{padding-right:28px}.unit span{position:absolute;right:0;bottom:8px;font-size:12px;color:var(--mute)}
+
+/* vitals */
+.vg{display:grid;grid-template-columns:repeat(6,1fr);gap:10px 18px}
+.vg label{display:block;font-size:12px;color:var(--sub)}
+.vg label.w2{grid-column:span 2}.vg label.w4{grid-column:span 4}.vg label.w6{grid-column:1/-1}
+.vg input,.vg select{margin-top:1px;height:34px}
+.vg .unit span{bottom:8px}
+input.ab{color:var(--red);border-bottom-color:var(--red)}
+.fu{border-left:1px solid var(--ink);padding:2px 0 8px 18px;margin-top:18px}
+.fu .fh{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.fu .fh label{font-family:var(--serif);font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.fu .fh input{width:120px;height:32px;font-family:var(--sans);font-weight:400}
+.fu .fh .x{margin-left:auto}
+.abn{color:var(--red)}
+.fuq{margin-top:14px}
+.vt{font-variant-numeric:tabular-nums}
 
 /* view */
 .phead .eyebrow{font-family:var(--serif);font-size:13px;color:var(--sub);margin-bottom:6px;letter-spacing:.02em}
@@ -191,6 +207,8 @@ textarea:focus{background-image:repeating-linear-gradient(to bottom,transparent 
   .crumb .acts{flex:1;justify-content:flex-end}
   .basic{grid-template-columns:1fr 1fr}
   .fg{grid-template-columns:1fr 1fr}
+  .vg{grid-template-columns:repeat(3,1fr)}
+  .vg label.w4{grid-column:1/-1}
   .sticky{margin:0 -18px;padding:10px 18px}
   .sticky .btn{flex:1}
   #vView .sec dl{grid-template-columns:84px 1fr}
@@ -200,7 +218,7 @@ textarea:focus{background-image:repeating-linear-gradient(to bottom,transparent 
 
 <header class="topbar">
   <button class="ibtn" id="tBack" title="뒤로"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-  <div class="brand"><span class="logo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>환자 노트</div>
+  <div class="brand"><span class="logo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M8 8h8M8 12h8M8 16h5"/></svg></span>환자 인계</div>
   <div class="tdate" id="tdate"></div>
   <span class="sp"></span>
   <button class="tbtn" id="bCopyAll" title="전체 인계 텍스트 복사"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><span class="tlabel">인계 복사</span></button>
@@ -305,6 +323,14 @@ textarea:focus{background-image:repeating-linear-gradient(to bottom,transparent 
     <input type="text" id="f_onset" placeholder="언제부터 (예: 11/7 저녁부터, 3일 전)" style="margin-top:8px">
   </div>
 
+  <div class="sec"><h2>바이탈</h2>
+    <div class="lab">내원 당시</div>
+    <div id="vitIn"></div>
+    <div class="lab" style="margin-top:26px">f/u 기록</div>
+    <div id="fuList"></div>
+    <button class="btn l s" id="fuAdd" style="margin-top:14px"></button>
+  </div>
+
   <div class="sec"><h2>검사 결과 (특이사항)</h2>
     <textarea id="f_lab" placeholder="예: WBC 15.2↑ CRP 12↑ / CXR Rt. LLL haziness / Cr 2.1"></textarea>
   </div>
@@ -350,15 +376,31 @@ const devDetail=x=>{const T=DT[x.t]||DT.etc;return T.f.map(([k,l,ty])=>{const v=
   if(ty==='date'){const d=dday(v);return `${dLabel(l)} ${md(v)}${d?`(${d})`:''}`}
   if(k==='feed')return '피딩: '+v; if(k==='drain')return '배액: '+v; return v}).filter(Boolean).join(' · ')};
 const devName=x=>x.t==='etc'&&x.name?x.name:(DT[x.t]||DT.etc).n;
+/* vitals: [key, label, unit, placeholder] */
+const VF=[['bp','BP','','120/80'],['hr','HR','','80'],['rr','RR','','20'],['bt','BT','℃','36.5'],['spo2','SpO₂','%','98'],['bst','BST','','120']];
+const MENTAL=['','Alert','Drowsy','Stupor','Semicoma','Coma','혼돈(confused)'];
+// 이상 판정: 'h' 높음 / 'l' 낮음 / ''
+const vAbn=(k,v)=>{v=String(v||'').trim();if(!v)return '';
+  if(k==='bp'){const m=v.match(/(\d+)\s*\/\s*(\d+)/);if(!m)return '';const sb=+m[1],db=+m[2];return sb>=160||db>=100?'h':sb<90||db<50?'l':''}
+  const n=parseFloat(v);if(isNaN(n))return '';
+  const R={hr:[50,110],rr:[10,24],bt:[36,37.8],spo2:[94,999],bst:[70,300]}[k];if(!R)return '';
+  return n<R[0]?'l':(k==='bt'?n>=R[1]:n>R[1])?'h':''};
+const vPart=(k,v)=>{const F=VF.find(f=>f[0]===k);const a=vAbn(k,v);return {t:`${F[1]} ${v}${F[2]}${a==='h'?'↑':a==='l'?'↓':''}`,a}};
+const vParts=o=>VF.filter(([k])=>(o[k]||'').trim()).map(([k])=>vPart(k,o[k].trim()))
+  .concat(o.mental?[{t:'의식 '+o.mental,a:o.mental!=='Alert'?'h':''}]:[]);
+const vText=o=>vParts(o).map(x=>x.t).concat(o.note?[o.note]:[]).join(' · ');
+const vHTML=o=>vParts(o).map(x=>`<span class="vt${x.a?' abn':''}">${esc(x.t)}</span>`).concat(o.note?[esc(o.note)]:[]).join('<span class="sep">/</span>');
+const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+const fuLabel=f=>'f/u '+(f.d&&f.d!==today()?md(f.d)+' ':'')+(f.time||'');
 const PMH=['HTN','DM','Dyslipidemia','CVA','치매','파킨슨','CKD','HF','Afib','COPD','Cancer','결핵'];
-const SECS=[['basic','기본 정보'],['guard','보호자'],['mob','거동 · 욕창'],['dev','달고 있는 것'],['route','내원 경로'],['pmh','과거력'],['cc','현재 증상'],['lab','검사 결과'],['etc','기타']];
+const SECS=[['basic','기본 정보'],['guard','보호자'],['mob','거동 · 욕창'],['dev','달고 있는 것'],['route','내원 경로'],['pmh','과거력'],['cc','현재 증상'],['vit','바이탈'],['lab','검사 결과'],['etc','기타']];
 const REL=['배우자','아들','딸','며느리','사위','손자녀','형제자매','기타'];
 const SITE=['천골','미골','좌 둔부','우 둔부','좌 발뒤꿈치','우 발뒤꿈치','좌 대전자','우 대전자','기타'];
 const STAGE=['1단계','2단계','3단계','4단계','미분류','DTI'];
 
 let data=[];
 try{data=JSON.parse(localStorage.getItem(KEY)||'[]');if(!Array.isArray(data))data=[]}catch(e){data=[]}
-data.forEach(p=>{if(p.devs&&!p.lines){p.lines=Object.entries(p.devs).map(([k,d])=>({t:DT[k]?k:'etc',note:(d&&d.note)||''}));delete p.devs}if(!p.lines)p.lines=[]});
+data.forEach(p=>{if(p.devs&&!p.lines){p.lines=Object.entries(p.devs).map(([k,d])=>({t:DT[k]?k:'etc',note:(d&&d.note)||''}));delete p.devs}if(!p.lines)p.lines=[];if(!p.vit)p.vit={};if(!p.fu)p.fu=[]});
 const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(data));return true}catch(e){toast('저장 실패 (브라우저 저장소 사용 불가)');return false}};
 let cur=null, prevView='list';
 
@@ -421,11 +463,29 @@ function addDev(v){
   d.querySelector('.x').onclick=()=>{if([...d.querySelectorAll('[data-f]')].some(i=>i.value.trim())&&!confirm(T.n+' 항목을 삭제할까요?'))return;d.remove()};
   $('#devList').appendChild(d);return d;
 }
+function vitFields(v){
+  return '<div class="vg">'+VF.map(([k,l,u,ph])=>`<label>${l}<span class="unit" style="display:block"><input type="text" inputmode="${k==='bp'?'text':'decimal'}" data-v="${k}" placeholder="${ph}" value="${esc(v[k]||'')}"><span>${u}</span></span></label>`).join('')+
+    `<label class="w2">의식<select data-v="mental">${MENTAL.map(m=>`<option value="${m}"${m===(v.mental||'')?' selected':''}>${m||'-'}</option>`).join('')}</select></label>`+
+    `<label class="w4">메모<input type="text" data-v="note" placeholder="예: 해열제 투여 후, O₂ 2L 적용 중" value="${esc(v.note||'')}"></label></div>`;
+}
+const readV=el=>{const o={};el.querySelectorAll('[data-v]').forEach(i=>{const v=i.value.trim();if(v)o[i.dataset.v]=v});return o};
+// 이상 수치 입력 즉시 빨간색
+document.addEventListener('input',e=>{const i=e.target;if(i.dataset&&i.dataset.v&&VF.some(f=>f[0]===i.dataset.v))i.classList.toggle('ab',!!vAbn(i.dataset.v,i.value))});
+const markAbn=el=>el.querySelectorAll('input[data-v]').forEach(i=>i.classList.toggle('ab',!!vAbn(i.dataset.v,i.value)));
+function addFu(v={}){
+  if(!v.time){const d=new Date();v=Object.assign({time:`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`,d:today()},v)}
+  const r=document.createElement('div');r.className='fu';r.dataset.d=v.d||today();
+  r.innerHTML=`<div class="fh"><label>f/u <input type="time" class="ft" value="${esc(v.time||'')}"></label><button class="x" type="button" title="삭제">${IX}</button></div>`+vitFields(v);
+  r.querySelector('.x').onclick=()=>{if(Object.keys(readV(r)).length&&!confirm('이 f/u 기록을 삭제할까요?'))return;r.remove()};
+  $('#fuList').appendChild(r);markAbn(r);return r;
+}
+$('#fuAdd').innerHTML=IPLUS+'f/u 추가';
+$('#fuAdd').onclick=()=>{const r=addFu();r.querySelector('[data-v=bp]').focus()};
 $('#gAdd').onclick=()=>addG();$('#sAdd').onclick=()=>addS();
 
 /* ---------- form <-> data ---------- */
 const blank=()=>({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),bed:'',name:'',age:'',sex:'',
-  gHas:'',guards:[],mob:'',mobNote:'',soreHas:'',sores:[],lines:[],route:'',routeFrom:'',routeTxt:'',
+  gHas:'',guards:[],mob:'',mobNote:'',soreHas:'',sores:[],lines:[],vit:{},fu:[],route:'',routeFrom:'',routeTxt:'',
   pmh:[],pmhTxt:'',cc:'',onset:'',lab:'',etc:'',memos:{},upd:0});
 
 function fill(p){
@@ -438,6 +498,7 @@ function fill(p){
   ['#f_rJinTxt','#f_rMouTxt','#f_rEtcTxt'].forEach(s=>$(s).value='');
   if(p.route==='진협')$('#f_rJinTxt').value=p.routeTxt;if(p.route==='MOU')$('#f_rMouTxt').value=p.routeTxt;if(p.route==='기타')$('#f_rEtcTxt').value=p.routeTxt;
   setChip('pmh',p.pmh||[]);$('#f_pmhTxt').value=p.pmhTxt||'';
+  $('#vitIn').innerHTML=vitFields(p.vit||{});markAbn($('#vitIn'));$('#fuList').innerHTML='';(p.fu||[]).forEach(f=>addFu(f));
   fillMemos(p);$('#f_cc').value=p.cc;$('#f_onset').value=p.onset;$('#f_lab').value=p.lab;$('#f_etc').value=p.etc;
 }
 function collect(p){
@@ -449,7 +510,8 @@ function collect(p){
     lines:$$('#devList .dv').map(d=>{const o={t:d.dataset.t};d.querySelectorAll('[data-f]').forEach(i=>{if(i.value.trim())o[i.dataset.f]=i.value.trim()});return o}),
     route:getChip('route'),routeFrom:getChip('route')==='진협'?getChip('routeFrom'):'',
     routeTxt:({'진협':v('#f_rJinTxt'),'MOU':v('#f_rMouTxt'),'기타':v('#f_rEtcTxt')})[getChip('route')]||'',
-    pmh:getChip('pmh'),pmhTxt:v('#f_pmhTxt'),cc:v('#f_cc'),onset:v('#f_onset'),lab:v('#f_lab'),etc:v('#f_etc'),memos:Object.fromEntries(SECS.map(([k])=>[k,$('#m_'+k).value.trim()]).filter(x=>x[1])),upd:Date.now()});
+    pmh:getChip('pmh'),pmhTxt:v('#f_pmhTxt'),cc:v('#f_cc'),onset:v('#f_onset'),lab:v('#f_lab'),etc:v('#f_etc'),vit:readV($('#vitIn')),
+    fu:$$('#fuList .fu').map(r=>Object.assign({time:r.querySelector('.ft').value,d:r.dataset.d},readV(r))).filter(f=>Object.keys(f).some(k=>k!=='time'&&k!=='d')),memos:Object.fromEntries(SECS.map(([k])=>[k,$('#m_'+k).value.trim()]).filter(x=>x[1])),upd:Date.now()});
   return p;
 }
 
@@ -466,7 +528,9 @@ const fmt={
 const ROWS=[['보호자',fmt.guard,'guard'],['거동',fmt.mob,'mob'],['욕창',fmt.sore,'mob'],['내원 경로',fmt.route,'route'],['과거력',fmt.pmh,'pmh'],['현재 증상',fmt.cc,'cc'],['검사',p=>p.lab,'lab'],['기타',p=>p.etc,'etc']];
 const memo=(p,k)=>((p.memos||{})[k]||'').trim();
 const memoLine=(p,k)=>memo(p,k)?'  └ 메모: '+memo(p,k).replace(/\n/g,'\n          '):'';
-const rowsFor=(p,k)=>k==='dev'?((p.lines||[]).length?p.lines.map(x=>[devName(x),devDetail(x)]):[['라인 등','']]):ROWS.filter(r=>r[2]===k).map(([n,f])=>[n,f(p)]);
+const vitRows=p=>{const r=[];if(Object.keys(p.vit||{}).length)r.push(['내원 시 V/S',vText(p.vit),vHTML(p.vit)]);
+  (p.fu||[]).forEach(f=>r.push([fuLabel(f),vText(f),vHTML(f)]));return r.length?r:[['바이탈','']]};
+const rowsFor=(p,k)=>k==='vit'?vitRows(p):k==='dev'?((p.lines||[]).length?p.lines.map(x=>[devName(x),devDetail(x)]):[['라인 등','']]):ROWS.filter(r=>r[2]===k).map(([n,f])=>[n,f(p)]);
 const toText=p=>{
   const out=[fmt.head(p),memoLine(p,'basic')];
   SECS.slice(1).forEach(([k])=>{const rs=rowsFor(p,k);
@@ -488,6 +552,7 @@ function renderList(){
     const tags=[];
     if(p.mob)tags.push(`<span class="tag b">${esc(p.mob)}</span>`);
     if(p.soreHas==='y')tags.push(`<span class="tag w">욕창 ${p.sores.length?esc(p.sores.map(s=>s.site).join('·')):''}</span>`);
+    {const last=(p.fu||[]).length?p.fu[p.fu.length-1]:p.vit||{};const ab=vParts(last).filter(x=>x.a);if(ab.length)tags.push(`<span class="tag w abn">${esc(ab.map(x=>x.t).join(' '))}</span>`)}
     (p.lines||[]).forEach(x=>tags.push(`<span class="tag w">${esc(devName(x)+(x.fr?' '+x.fr+'Fr':''))}</span>`));
     if(p.gHas==='y')tags.push(`<span class="tag g">보호자 ${esc(p.guards.map(g=>g.rel).join('·'))}</span>`);
     if(p.gHas==='n')tags.push(`<span class="tag">보호자 없음</span>`);
@@ -506,7 +571,10 @@ function renderView(p){
       sec.innerHTML=`<div class="phead"><div class="eyebrow">${p.bed?`No. ${esc(p.bed)}`:'베드 미지정'}</div><div class="pn">${esc(p.name||'(이름 없음)')}</div><div class="meta">${meta}</div></div>`;}
     else{const rs=rowsFor(p,k);
       if(!rs.some(r=>r[1])&&!memo(p,k)){sec.classList.add('esec');sec.innerHTML=`<h2>${title}</h2><span class="et">미입력 · 눌러서 입력</span>`;sec.onclick=e=>{if(!e.target.closest('.mbtn'))openEdit(p,false)}}
-      else sec.innerHTML=`<h2>${title}</h2><dl class="${k==='dev'?'lines':''}">`+rs.map(([n,t])=>`<dt>${esc(n)}</dt><dd>${!t?'<span style="color:#bbb">-</span>':k==='dev'?t.split(' · ').map(x=>esc(x).replace(/\((D\+\d+)\)/,'<span class="dn">$1</span>')).join('<span class="sep">/</span>'):esc(t)}</dd>`).join('')+'</dl>';}
+      else sec.innerHTML=`<h2>${title}</h2><dl class="${k==='dev'?'lines':''}">`+rs.map(([n,t,h])=>`<dt>${esc(n)}</dt><dd>${!t?'<span style="color:#bbb">-</span>':h?h:k==='dev'?t.split(' · ').map(x=>esc(x).replace(/\((D\+\d+)\)/,'<span class="dn">$1</span>')).join('<span class="sep">/</span>'):esc(t)}</dd>`).join('')+'</dl>';}
+    if(k==='vit'){const b=document.createElement('button');b.type='button';b.className='btn l s fuq';b.innerHTML=IPLUS+'f/u 추가';
+      b.onclick=e=>{e.stopPropagation();openEdit(p,false);const r=addFu();r.scrollIntoView({block:'center'});r.querySelector('[data-v=bp]').focus({preventScroll:true})};
+      if(sec.classList.contains('esec')){b.style.margin='0 0 0 auto';b.style.marginRight='70px'}sec.appendChild(b)}
     S.appendChild(sec);
     const ta=attachMemo(sec,k);ta.value=memo(p,k);ta._sync();
     ta.addEventListener('input',()=>{p.memos=p.memos||{};const v=ta.value.trim();if(v)p.memos[k]=v;else delete p.memos[k];clearTimeout(ta._t);ta._t=setTimeout(persist,300)});
@@ -556,7 +624,7 @@ $('#q').oninput=renderList;
 $('#bWipe').onclick=()=>{if(!data.length)return;if(!confirm('모든 환자 기록을 삭제할까요?\n(근무 끝나면 정리용)'))return;data=[];persist();renderList();toast('전체 삭제했어요')};
 $('#bExport').onclick=()=>{
   const b=new Blob([JSON.stringify(data,null,1)],{type:'application/json'}),a=document.createElement('a');
-  a.href=URL.createObjectURL(b);a.download='환자노트_'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  a.href=URL.createObjectURL(b);a.download='환자인계_'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 };
 $('#bImport').onclick=()=>$('#fImport').click();
 $('#fImport').onchange=async e=>{
