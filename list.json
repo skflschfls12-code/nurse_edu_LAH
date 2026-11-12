@@ -108,5 +108,10 @@
   "file": "registrations.html",
   "title": "진료 가능 등록 관리 방법",
   "group": "라벨"
+ },
+ {
+  "file": "returnhow.html",
+  "title": "향정•마약류 잔량 반납 방법",
+  "group": "향정•마약류 불출"
  }
 ]
